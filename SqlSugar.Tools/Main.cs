@@ -1,10 +1,9 @@
-﻿using Chromium.Event;
+using Chromium.Event;
 using NetDimension.NanUI;
 using SqlSugar.Tools.SQLHelper;
 using System;
 using System.Diagnostics;
 using System.Drawing;
-using System.Linq;
 using System.Windows.Forms;
 
 namespace SqlSugar.Tools
@@ -27,19 +26,11 @@ namespace SqlSugar.Tools
                 });
             };
 
-            GlobalObject.AddFunction("toGithub").Execute += (func, args) =>
-            {
-                this.RequireUIThread(() =>
-                {
-                    Process.Start("https://github.com/sunkaixuan/sqlsugar/");
-                });
-            };
-
             GlobalObject.AddFunction("toHome").Execute += (func, args) =>
             {
                 this.RequireUIThread(() =>
                 {
-                    Process.Start("http://www.codeisbug.com/");
+                    Process.Start("https://www.donet5.com/");
                 });
             };
 
@@ -47,7 +38,7 @@ namespace SqlSugar.Tools
             {
                 this.RequireUIThread(() =>
                 {
-                    Process.Start("http://www.codeisbug.com/Doc/8");
+                    Process.Start("https://www.donet5.com/Home/Doc");
                 });
             };
 
@@ -65,17 +56,6 @@ namespace SqlSugar.Tools
                 {
                     DBMove.ShowWindow();
                 });
-            };
-
-            var qq = base.GlobalObject.AddObject("qq");
-            var addedQun = qq.AddFunction("addedQun");
-            addedQun.Execute += (func, args) =>
-            {
-                var url = ((args.Arguments.FirstOrDefault(p => p.IsString)?.StringValue) ?? string.Empty).Trim();
-                if (!string.IsNullOrEmpty(url))
-                {
-                    Process.Start(url);
-                }
             };
 
             base.LoadHandler.OnLoadStart += LoadHandler_OnLoadStart;

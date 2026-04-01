@@ -1,29 +1,40 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" xmlns="http://www.w3.org/1999/xhtml">
 <head>
     <meta charset="utf-8" />
     <title>SqlSugar ORM Tools</title>
-    <link href="../css/element.css" rel="stylesheet" />
+    <link href="../css/element-plus.css" rel="stylesheet" />
     <link href="../css/base.css" rel="stylesheet" />
     <link href="../css/index.css" rel="stylesheet" />
+    <link href="../css/element-plus-app.css" rel="stylesheet" />
 </head>
 <body>
     <div id="app">
         <div id="tool">
             <el-tooltip class="item" effect="dark" content="退出程序" placement="right">
-                <el-button onclick="exit()" style="top:10px" class="tool-btn" icon="el-icon-close" circle size="small"></el-button>
+                <el-button onclick="exit()" style="top:10px" class="tool-btn tool-btn-icon" circle size="small">
+                    <img src="../svg/close-btn.svg" width="14" height="14" alt="" />
+                </el-button>
             </el-tooltip>
             <el-tooltip class="item" effect="dark" content="最大化" placement="right">
-                <el-button n-ui-command="maximize" style="top:60px" class="tool-btn" icon="el-icon-plus" circle size="small"></el-button>
+                <el-button n-ui-command="maximize" style="top:60px" class="tool-btn tool-btn-icon" circle size="small">
+                    <img src="../svg/max-btn.svg" width="14" height="14" alt="" />
+                </el-button>
             </el-tooltip>
             <el-tooltip class="item" effect="dark" content="最小化" placement="right">
-                <el-button n-ui-command="minimize" style="top:110px" class="tool-btn" icon="el-icon-minus" circle size="small"></el-button>
+                <el-button n-ui-command="minimize" style="top:110px" class="tool-btn tool-btn-icon" circle size="small">
+                    <img src="../svg/min-btn.svg" width="14" height="14" alt="" />
+                </el-button>
             </el-tooltip>
             <el-tooltip v-if="particlesJSSwitch === '1'" class="item" effect="dark" content="关闭背景特效, 减少CPU占用" placement="right">
-                <el-button @click="closeParticles" style="top:160px" class="tool-btn" icon="el-icon-picture-outline" circle size="small"></el-button>
+                <el-button @click="closeParticles" style="top:160px" class="tool-btn tool-btn-icon" circle size="small">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" fill="currentColor" stroke="none" /><path d="M21 15l-5-5L5 21" stroke-linecap="round" /></svg>
+                </el-button>
             </el-tooltip>
             <el-tooltip v-else class="item" effect="dark" content="打开背景特效, 会占用3%左右的CPU" placement="right">
-                <el-button @click="openParticles" style="top:160px" class="tool-btn" icon="el-icon-picture" circle size="small"></el-button>
+                <el-button @click="openParticles" style="top:160px" class="tool-btn tool-btn-icon" circle size="small">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z" /></svg>
+                </el-button>
             </el-tooltip>
         </div>
         <div id="td" style="top:195px;"></div>
@@ -38,7 +49,7 @@
                     </div>
                     <div class="card-panel-description">
                         <div class="card-panel-text">SQL Sugar ORM开发文档</div>
-                        <span>目前先暂时用官网的文档, 等后期整理离线文档</span>
+                        <span>果糖网 SqlSugar 官方文档（donet5.com）</span>
                     </div>
                 </div>
             </el-col>
@@ -81,6 +92,7 @@
                     </div>
                 </div>
             </el-col>
+            <!--
             <el-col :xs="12" :sm="12" :lg="6" class="card-panel-col" onclick="toGithub()">
                 <div class="card-panel">
                     <div class="card-panel-icon-wrapper icon-people">
@@ -107,29 +119,13 @@
                     </div>
                 </div>
             </el-col>
+            -->
         </el-row>
-        <div id="qq">
-            <h3 style="color:#444">交流QQ群<span style="font-size:12px;font-weight:500;color:#666;padding-left:10px;">单击即可添加群</span></h3>
-            <el-tag class="qqTag" type="danger" onclick="qq.addedQun('http://shang.qq.com/wpa/qunwpa?idkey=428ff6cca697f2e401944eff2ddb5e150289bc0eb0f441f0d09dd7a5395fa411')">一群: 225982985</el-tag>
-            <el-tag class="qqTag" type="danger" onclick="qq.addedQun('http://shang.qq.com/wpa/qunwpa?idkey=e68413f2d34bff2110aa339632c21f0bd9399ea18e92ffe64f58b7a138cde8a0')">二群: 726648662</el-tag>
-            <el-tag class="qqTag" type="danger" onclick="qq.addedQun('http://shang.qq.com/wpa/qunwpa?idkey=9f67b12250f496ca92e8615faeed11bd79fd8163ff51e03f002cd79561af3b27')">三群: 654015377</el-tag>
-            <p style="font-size:12px;color:#666">请不要重复申请入群, 添加一个群即可, 留下位置给更多需要的人. </p>
-        </div>
         <div id="particles-js"></div>
-        <el-dialog class="my-pay" :visible.sync="dialogVisible" :close-on-click-modal="false" top="20px" width="90%">
-            <div>
-                <p>如果该工具为你提供了便利, 您可以根据自己的经济情况, 给予适当的捐赠, 支持开发者的维护</p>
-                <p>本工具BUG反馈请加下面的三个群之一, 进行反馈</p>
-                <p>本工具Github地址: <el-tag type="success" onclick="qq.addedQun('https://github.com/q7164518/SqlSugar.Tools')">单击我查看</el-tag></p>
-            </div>
-            <div style="text-align:center">
-                <img src="../img/pay.png" style="height:388px" />
-            </div>
-        </el-dialog>
     </div>
 </body>
 </html>
 <script src="../js/particles.js"></script>
-<script src="../js/vue.js"></script>
-<script src="../js/element.js"></script>
+<script src="../js/vue3.global.prod.js"></script>
+<script src="../js/element-plus.full.min.js"></script>
 <script src="../js/index.js"></script>

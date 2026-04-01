@@ -1,39 +1,48 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 
 <html lang="en" xmlns="http://www.w3.org/1999/xhtml">
 <head>
     <meta charset="utf-8" />
     <title></title>
-    <link href="../css/element.css" rel="stylesheet" />
+    <link href="../css/element-plus.css" rel="stylesheet" />
     <link href="../css/base.css" rel="stylesheet" />
     <link href="../css/CreateEntity.css" rel="stylesheet" />
     <link href="../css/DBMove.css" rel="stylesheet" />
+    <link href="../css/element-plus-app.css" rel="stylesheet" />
 </head>
 <body>
     <div id="app" v-loading.fullscreen.lock="loading">
         <div id="tool">
             <el-tooltip class="item" effect="dark" content="退出程序" placement="right">
-                <el-button onclick="exit()" style="top:10px" class="tool-btn" icon="el-icon-close" circle size="small"></el-button>
+                <el-button onclick="exit()" style="top:10px" class="tool-btn tool-btn-icon" circle size="small">
+                    <img src="../svg/close-btn.svg" width="14" height="14" alt="" />
+                </el-button>
             </el-tooltip>
             <el-tooltip class="item" effect="dark" content="最大化" placement="right">
-                <el-button n-ui-command="maximize" style="top:60px" class="tool-btn" icon="el-icon-plus" circle size="small"></el-button>
+                <el-button n-ui-command="maximize" style="top:60px" class="tool-btn tool-btn-icon" circle size="small">
+                    <img src="../svg/max-btn.svg" width="14" height="14" alt="" />
+                </el-button>
             </el-tooltip>
             <el-tooltip class="item" effect="dark" content="最小化" placement="right">
-                <el-button n-ui-command="minimize" style="top:110px" class="tool-btn" icon="el-icon-minus" circle size="small"></el-button>
+                <el-button n-ui-command="minimize" style="top:110px" class="tool-btn tool-btn-icon" circle size="small">
+                    <img src="../svg/min-btn.svg" width="14" height="14" alt="" />
+                </el-button>
             </el-tooltip>
             <el-tooltip class="item" effect="dark" content="数据库字段类型设置" placement="right">
-                <el-button onclick="showDBTypeSetting()" style="top:160px" class="tool-btn" icon="el-icon-setting" circle size="small"></el-button>
+                <el-button onclick="showDBTypeSetting()" style="top:160px" class="tool-btn tool-btn-icon" circle size="small">
+                    <img src="../svg/settings.svg" width="14" height="14" alt="" />
+                </el-button>
             </el-tooltip>
         </div>
         <div id="td" style="top:195px;">
             <p class="left-title" style="height:100px">数 据 库 迁 移</p>
         </div>
         <el-steps :active="activeIndex" simple class="top-step">
-            <el-step title="选择源" icon="el-icon-edit"></el-step>
-            <el-step title="选择目标" icon="el-icon-location-outline"></el-step>
-            <el-step title="选择表" icon="el-icon-tickets"></el-step>
-            <el-step title="开始迁移" icon="el-icon-more"></el-step>
-            <el-step title="迁移完成" icon="el-icon-success"></el-step>
+            <el-step title="选择源"></el-step>
+            <el-step title="选择目标"></el-step>
+            <el-step title="选择表"></el-step>
+            <el-step title="开始迁移"></el-step>
+            <el-step title="迁移完成"></el-step>
         </el-steps>
         <div v-if="activeIndex <= 1">
             <h1 v-if="activeIndex === 0" style="text-align:center;color:#444;font-family:微软雅黑;font-size:22px;">输入(选择)源数据库信息, 当前源数据库类型: <span style="color:#e6a23c">{{dbName[dbType]}}</span></h1>
@@ -43,11 +52,11 @@
                     <el-radio-button v-for="(item, index) in dbName" :label="item" :key="index" :disabled="activeIndex === 1 && selectYuanDB.dbType === item"></el-radio-button>
                 </el-radio-group>
             </div>
-            <div class="left-db" @click="leftDB">
-                <i class="el-icon-arrow-left"></i>
+            <div class="left-db" @click="leftDB" title="上一数据库类型">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
             </div>
-            <div class="right-db" @click="rightDB">
-                <i class="el-icon-arrow-right"></i>
+            <div class="right-db" @click="rightDB" title="下一数据库类型">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
             </div>
             <div class="db-type-tab">
                 <transition name="step">
@@ -73,9 +82,9 @@
                                     <el-option v-for="(item, index) in dbList" :label="item.name" :value="item.name" :key="index"></el-option>
                                 </el-select>
                             </el-form-item>
-                            <el-form-item>
-                                <el-button type="success" style="width:48%" icon="el-icon-refresh" @click="testSQLServerLink">测试连接&加载数据库</el-button>
-                                <el-button type="danger" style="width:48%;float:right" icon="el-icon-check" @click="selectSqlServerDB">下一步</el-button>
+                            <el-form-item class="app-form-actions">
+                                <el-button type="success" @click="testSQLServerLink">测试连接并加载数据库</el-button>
+                                <el-button type="primary" @click="selectSqlServerDB">下一步</el-button>
                             </el-form-item>
                         </el-form>
                     </div>
@@ -98,9 +107,9 @@
                                     <el-option v-for="(item, index) in dbList" :label="item.name" :value="item.name" :key="index"></el-option>
                                 </el-select>
                             </el-form-item>
-                            <el-form-item>
-                                <el-button type="success" style="width:48%" icon="el-icon-refresh" @click="testMySqlLink">测试连接&加载数据库</el-button>
-                                <el-button type="danger" style="width:48%;float:right" icon="el-icon-check" @click="selectMySqlDB">下一步</el-button>
+                            <el-form-item class="app-form-actions">
+                                <el-button type="success" @click="testMySqlLink">测试连接并加载数据库</el-button>
+                                <el-button type="primary" @click="selectMySqlDB">下一步</el-button>
                             </el-form-item>
                         </el-form>
                     </div>
@@ -108,15 +117,17 @@
                         <el-form ref="SQLiteForm" :model="SQLiteForm" label-width="100px" :rules="SQLiteFormRules">
                             <el-form-item label="数据文件: " prop="host">
                                 <el-input v-model="SQLiteForm.host" placeholder="请输入DB文件地址或选择文件">
-                                    <el-button slot="append" icon="el-icon-setting" @click="selectDBFile">选择DB文件</el-button>
+                                    <template #append>
+                                        <el-button @click="selectDBFile">选择DB文件</el-button>
+                                    </template>
                                 </el-input>
                             </el-form-item>
                             <el-form-item label="数据库密码: ">
                                 <el-input v-model="SQLiteForm.pwd" placeholder="请输入数据库密码, 没有密码则不写"></el-input>
                             </el-form-item>
-                            <el-form-item>
-                                <el-button type="success" style="width:48%" icon="el-icon-refresh">测试连接</el-button>
-                                <el-button type="danger" style="width:48%;float:right" icon="el-icon-check">下一步</el-button>
+                            <el-form-item class="app-form-actions">
+                                <el-button type="success">测试连接</el-button>
+                                <el-button type="primary">下一步</el-button>
                             </el-form-item>
                         </el-form>
                     </div>
@@ -145,9 +156,9 @@
                             <el-form-item label="数据库密码: " prop="pwd">
                                 <el-input v-model="OracleForm.pwd" placeholder="请输入数据库密码"></el-input>
                             </el-form-item>
-                            <el-form-item>
-                                <el-button type="success" style="width:48%" icon="el-icon-refresh">测试连接</el-button>
-                                <el-button type="danger" style="width:48%;float:right" icon="el-icon-check">下一步</el-button>
+                            <el-form-item class="app-form-actions">
+                                <el-button type="success">测试连接</el-button>
+                                <el-button type="primary">下一步</el-button>
                             </el-form-item>
                         </el-form>
                     </div>
@@ -171,9 +182,9 @@
                             <el-form-item label="支持自增列: " prop="db">
                                 <el-checkbox v-model="PGSqlForm.identity">是否支持Identity (自增), 如是版本低于10, 请不要勾选</el-checkbox>
                             </el-form-item>
-                            <el-form-item>
-                                <el-button @click="testpgsqlLingk" type="success" style="width:48%" icon="el-icon-refresh">测试连接</el-button>
-                                <el-button @click="selectPGSQLDB" type="danger" style="width:48%;float:right" icon="el-icon-check">下一步</el-button>
+                            <el-form-item class="app-form-actions">
+                                <el-button @click="testpgsqlLingk" type="success">测试连接</el-button>
+                                <el-button @click="selectPGSQLDB" type="primary">下一步</el-button>
                             </el-form-item>
                         </el-form>
                     </div>
@@ -212,9 +223,9 @@
                 <div class="move-setting-item">
                     <span class="title"><el-tag type="warning">迁移设置</el-tag></span>
                     <div>
-                        <div class="my-btn"><el-button type="primary" size="small" icon="el-icon-tickets" @click="loadingTablesYuan">加载源数据库的数据表</el-button></div>
-                        <div class="my-btn"><el-button type="danger" size="small" icon="el-icon-tickets" @click="loadingTablesMubiao">加载目标数据库已有的数据表</el-button></div>
-                        <div class="my-btn"><el-button onclick="showDBTypeSetting()" type="warning" size="small" icon="el-icon-setting">数据库字段类型映射关系设置</el-button></div>
+                        <div class="my-btn"><el-button type="primary" size="small" @click="loadingTablesYuan">加载源数据库的数据表</el-button></div>
+                        <div class="my-btn"><el-button type="danger" size="small" @click="loadingTablesMubiao">加载目标数据库已有的数据表</el-button></div>
+                        <div class="my-btn"><el-button onclick="showDBTypeSetting()" type="warning" size="small">数据库字段类型映射关系设置</el-button></div>
                     </div>
                     <div style="margin-top:30px;">
                         <div class="my-btn">
@@ -239,7 +250,7 @@
                         </div>
                     </div>
                     <div style="margin-top:30px;">
-                        <el-button @click="startMoveFunc" type="success" size="small" icon="el-icon-success" style="width:100%">开始迁移</el-button>
+                        <el-button @click="startMoveFunc" type="success" size="small" style="width:100%">开始迁移</el-button>
                     </div>
                     <div style="margin-top:30px;">
                         <p style="font-size:12px;">本工具进行表数据迁移, 没有高深的算法, 就是循环查询添加</p>
@@ -253,7 +264,7 @@
             </div>
         </div>
         <div class="botom-nav">
-            <el-breadcrumb separator-class="el-icon-arrow-right">
+            <el-breadcrumb separator="/">
                 <el-breadcrumb-item><a href="javascript:void(0);" @click="toStpe1">选择源数据库</a></el-breadcrumb-item>
                 <el-breadcrumb-item v-if="activeIndex >= 1"><a href="javascript:void(0);" @click="toStpe2">选择目标数据库</a></el-breadcrumb-item>
                 <el-breadcrumb-item v-if="activeIndex >= 2"><a href="javascript:void(0);">选择数据表</a></el-breadcrumb-item>
@@ -264,7 +275,7 @@
     </div>
 </body>
 </html>
-<script src="../js/vue.js"></script>
-<script src="../js/element.js"></script>
+<script src="../js/vue3.global.prod.js"></script>
+<script src="../js/element-plus.full.min.js"></script>
 <script src="../js/DBTypeMapping.js"></script>
 <script src="../js/DBMove.js"></script>

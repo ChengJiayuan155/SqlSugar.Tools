@@ -1,11 +1,12 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" xmlns="http://www.w3.org/1999/xhtml">
 <head>
     <meta charset="utf-8" />
     <title></title>
-    <link href="../css/element.css" rel="stylesheet" />
+    <link href="../css/element-plus.css" rel="stylesheet" />
     <link href="../css/base.css" rel="stylesheet" />
     <link href="../css/CreateEntity.css" rel="stylesheet" />
+    <link href="../css/element-plus-app.css" rel="stylesheet" />
     <style type="text/css">
         #app {
             margin: 0 !important;
@@ -36,15 +37,26 @@
     <div id="app" v-loading.fullscreen.lock="loading">
         <div id="tool">
             <el-tooltip class="item" effect="dark" content="退出程序" placement="right">
-                <el-button onclick="exit()" style="top:10px" class="tool-btn" icon="el-icon-close" circle size="small"></el-button>
+                <el-button onclick="exit()" style="top:10px" class="tool-btn tool-btn-icon" circle size="small">
+                    <img src="../svg/close-btn.svg" width="14" height="14" alt="" />
+                </el-button>
             </el-tooltip>
             <el-tooltip class="item" effect="dark" content="最大化" placement="right">
-                <el-button n-ui-command="maximize" style="top:60px" class="tool-btn" icon="el-icon-plus" circle size="small"></el-button>
+                <el-button n-ui-command="maximize" style="top:60px" class="tool-btn tool-btn-icon" circle size="small">
+                    <img src="../svg/max-btn.svg" width="14" height="14" alt="" />
+                </el-button>
             </el-tooltip>
             <el-tooltip class="item" effect="dark" content="最小化" placement="right">
-                <el-button n-ui-command="minimize" style="top:110px" class="tool-btn" icon="el-icon-minus" circle size="small"></el-button>
+                <el-button n-ui-command="minimize" style="top:110px" class="tool-btn tool-btn-icon" circle size="small">
+                    <img src="../svg/min-btn.svg" width="14" height="14" alt="" />
+                </el-button>
             </el-tooltip>
-            <el-popover placement="bottom" trigger="click">
+            <el-popover placement="bottom" trigger="click" :width="420">
+                <template #reference>
+                    <el-tooltip class="item" effect="dark" content="搜索源类型" placement="right">
+                        <el-button style="top:160px" class="tool-btn tool-btn-text" circle size="small">搜</el-button>
+                    </el-tooltip>
+                </template>
                 <div style="padding-bottom:5px;">
                     <span>搜索的数据库: </span>
                     <el-radio-group v-model="searchDB" size="small">
@@ -56,22 +68,26 @@
                     </el-radio-group>
                 </div>
                 <el-input placeholder="请输入类型搜索(模糊)" v-model="searchType" class="input-with-select"></el-input>
-                <el-tooltip slot="reference" class="item" effect="dark" content="搜索源类型" placement="right">
-                    <el-button style="top:160px" class="tool-btn" icon="el-icon-search" circle size="small"></el-button>
-                </el-tooltip>
             </el-popover>
-            <el-popover placement="bottom" trigger="click">
+            <el-popover placement="bottom" trigger="click" :width="420">
+                <template #reference>
+                    <el-tooltip class="item" effect="dark" content="编辑映射关系" placement="right">
+                        <el-button style="top:210px" class="tool-btn tool-btn-text" circle size="small">编</el-button>
+                    </el-tooltip>
+                </template>
                 <div>
-                    <el-button @click="edit = true" type="warning" icon="el-icon-edit-outline" size="small">编辑模式</el-button>
-                    <el-button @click="escEdit" type="danger" icon="el-icon-error" size="small">退出编辑模式</el-button>
-                    <el-button @click="saveConfig" type="success" icon="el-icon-success" size="small">保存编辑</el-button>
-                    <el-button @click="dialogVisible = true" type="primary" icon="el-icon-circle-plus" size="small">添加映射</el-button>
+                    <el-button @click="edit = true" type="warning" size="small">编辑模式</el-button>
+                    <el-button @click="escEdit" type="danger" size="small">退出编辑模式</el-button>
+                    <el-button @click="saveConfig" type="success" size="small">保存编辑</el-button>
+                    <el-button @click="dialogVisible = true" type="primary" size="small">添加映射</el-button>
                 </div>
-                <el-tooltip slot="reference" class="item" effect="dark" content="编辑映射关系" placement="right">
-                    <el-button style="top:210px" class="tool-btn" icon="el-icon-setting" circle size="small"></el-button>
-                </el-tooltip>
             </el-popover>
-            <el-popover placement="bottom" trigger="click">
+            <el-popover placement="bottom" trigger="click" :width="520">
+                <template #reference>
+                    <el-tooltip class="item" effect="dark" content="使用说明" placement="right">
+                        <el-button style="top:260px" class="tool-btn tool-btn-text" circle size="small">?</el-button>
+                    </el-tooltip>
+                </template>
                 <div>
                     <p>1. 本设置映射了SqlSugar ORM支持的五种数据库的各个类型映射, 方便进行无缝的数据库移植.</p>
                     <p>2. 初次使用为默认映射关系, 可能不适合每个用户使用, 所以需要各位使用者点击上面的按钮进行修改和新增映射关系.</p>
@@ -82,9 +98,6 @@
                     <p>7. 本设置默认的配置是以MSSQL为源数据库针对其它四个数据库进行迁移的设置, 如果需要其它迁移, 请以对应的源数据库为准备进行类型映射设置.</p>
                     <p>8. 本工具后期会新增在线搜索类型映射关系功能 (届时大部分清空将无需自行配置), 暂时资金紧缺, 将不包涵该功能, 还希望各位使用者自行设置映射关系, 谢谢配合.</p>
                 </div>
-                <el-tooltip slot="reference" class="item" effect="dark" content="使用说明" placement="right">
-                    <el-button style="top:260px" class="tool-btn" icon="el-icon-question" circle size="small"></el-button>
-                </el-tooltip>
             </el-popover>
         </div>
         <div id="td" style="top:295px;">
@@ -94,99 +107,101 @@
         <div style="width:calc(100% - 40px);height:100%;position:fixed;top:0;bottom:0;left:40px;right:0;margin:auto;">
             <el-table :data="tableData" style="width: 100%" border :row-class-name="tableRowClassName" height="100%">
                 <el-table-column label="SQL Server类型" show-overflow-tooltip>
-                    <template slot-scope="scope">
+                    <template #default="scope">
                         <el-input v-if="edit === true" v-model="tableData[scope.$index].MSSQL"></el-input>
                         <span v-else>{{scope.row.MSSQL}}</span>
                     </template>
                 </el-table-column>
                 <el-table-column label="MySql类型" show-overflow-tooltip>
-                    <template slot-scope="scope">
+                    <template #default="scope">
                         <el-input v-if="edit === true" v-model="tableData[scope.$index].MySql"></el-input>
                         <span v-else>{{scope.row.MySql}}</span>
                     </template>
                 </el-table-column>
                 <el-table-column label="SQLite类型" show-overflow-tooltip>
-                    <template slot-scope="scope">
+                    <template #default="scope">
                         <el-input v-if="edit === true" v-model="tableData[scope.$index].SQLite"></el-input>
                         <span v-else>{{scope.row.SQLite}}</span>
                     </template>
                 </el-table-column>
                 <el-table-column label="Oracle类型" show-overflow-tooltip>
-                    <template slot-scope="scope">
+                    <template #default="scope">
                         <el-input v-if="edit === true" v-model="tableData[scope.$index].Oracle"></el-input>
                         <span v-else>{{scope.row.Oracle}}</span>
                     </template>
                 </el-table-column>
                 <el-table-column label="PostregSQL类型" show-overflow-tooltip>
-                    <template slot-scope="scope">
+                    <template #default="scope">
                         <el-input v-if="edit === true" v-model="tableData[scope.$index].PostregSQL"></el-input>
                         <span v-else>{{scope.row.PostregSQL}}</span>
                     </template>
                 </el-table-column>
                 <el-table-column label="说明" show-overflow-tooltip>
-                    <template slot-scope="scope">
+                    <template #default="scope">
                         <el-input v-if="edit === true" v-model="tableData[scope.$index].Desc"></el-input>
                         <span v-else>{{scope.row.Desc}}</span>
                     </template>
                 </el-table-column>
                 <el-table-column label="功能" fixed="right" width="95">
-                    <template slot-scope="scope">
-                        <el-button @click="deleteConfig(scope.row.ID)" size="mini" type="danger" icon="el-icon-close">删除</el-button>
+                    <template #default="scope">
+                        <el-button @click="deleteConfig(scope.row.ID)" size="small" type="danger" link>删除</el-button>
                     </template>
                 </el-table-column>
             </el-table>
         </div>
 
-        <el-dialog title="添加映射关系" :visible.sync="dialogVisible" :close-on-click-modal="false" width="80%" top="50px" @closed="dialogClosed">
+        <el-dialog title="添加映射关系" v-model="dialogVisible" :close-on-click-modal="false" width="80%" top="50px" @closed="dialogClosed">
             <el-table :data="addedTable" style="width: 100%" border :row-class-name="tableRowClassName" height="400px">
                 <el-table-column type="index" width="50"></el-table-column>
                 <el-table-column label="SQL Server类型" show-overflow-tooltip>
-                    <template slot-scope="scope">
+                    <template #default="scope">
                         <el-input placeholder="请输入数据库类型" v-model="addedTable[scope.$index].MSSQL"></el-input>
                     </template>
                 </el-table-column>
                 <el-table-column label="MySql类型" show-overflow-tooltip>
-                    <template slot-scope="scope">
+                    <template #default="scope">
                         <el-input placeholder="请输入数据库类型" v-model="addedTable[scope.$index].MySql"></el-input>
                     </template>
                 </el-table-column>
                 <el-table-column label="SQLite类型" show-overflow-tooltip>
-                    <template slot-scope="scope">
+                    <template #default="scope">
                         <el-input placeholder="请输入数据库类型" v-model="addedTable[scope.$index].SQLite"></el-input>
                     </template>
                 </el-table-column>
                 <el-table-column label="Oracle类型" show-overflow-tooltip>
-                    <template slot-scope="scope">
+                    <template #default="scope">
                         <el-input placeholder="请输入数据库类型" v-model="addedTable[scope.$index].Oracle"></el-input>
                     </template>
                 </el-table-column>
                 <el-table-column label="PostregSQL类型" show-overflow-tooltip>
-                    <template slot-scope="scope">
+                    <template #default="scope">
                         <el-input placeholder="请输入数据库类型" v-model="addedTable[scope.$index].PostregSQL"></el-input>
                     </template>
                 </el-table-column>
                 <el-table-column label="说明" show-overflow-tooltip>
-                    <template slot-scope="scope">
+                    <template #default="scope">
                         <el-input placeholder="请输入说明, 可以不输入" v-model="addedTable[scope.$index].Desc"></el-input>
                     </template>
                 </el-table-column>
             </el-table>
-            <span slot="footer">
-                <el-button size="mini" icon="el-icon-error" type="info" @click="dialogVisible = false">取 消</el-button>
-                <el-button size="mini" icon="el-icon-minus" type="danger" @click="removeTableRow">移除最后一行</el-button>
-                <el-button size="mini" icon="el-icon-plus" type="warning" @click="addedTableRow">添加一行</el-button>
-                <el-button size="mini" icon="el-icon-success" type="success" @click="saveAddedConfig">保 存</el-button>
+            <template #footer>
+            <span>
+                <el-button size="small" type="info" @click="dialogVisible = false">取 消</el-button>
+                <el-button size="small" type="danger" @click="removeTableRow">移除最后一行</el-button>
+                <el-button size="small" type="warning" @click="addedTableRow">添加一行</el-button>
+                <el-button size="small" type="success" @click="saveAddedConfig">保 存</el-button>
             </span>
+            </template>
         </el-dialog>
     </div>
 </body>
 </html>
-<script src="../js/vue.js"></script>
-<script src="../js/element.js"></script>
+<script src="../js/vue3.global.prod.js"></script>
+<script src="../js/element-plus.full.min.js"></script>
 <script src="../js/DBTypeMapping.js"></script>
 <script type="text/javascript">
-    new Vue({
-        el: '#app',
+    const { createApp } = Vue;
+    const app = createApp({
         data() {
             return {
                 loading: false,
@@ -291,4 +306,8 @@
             }
         }
     });
+    app.use(ElementPlus);
+    app.config.globalProperties.$message = ElementPlus.ElMessage;
+    app.config.globalProperties.$confirm = ElementPlus.ElMessageBox.confirm;
+    app.mount('#app');
 </script>

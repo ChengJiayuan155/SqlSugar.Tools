@@ -1,4 +1,4 @@
-﻿const sqlServerLinkInfoKey = "SQL_SERVER_LINK_INFO_KEY";
+const sqlServerLinkInfoKey = "SQL_SERVER_LINK_INFO_KEY";
 const mySqlLinkInfoKey = "MY_SQL_LINK_INFO_KEY";
 const pgsqlLinkInfoKey = "PG_SQL_LINK_INFO_KEY";
 
@@ -14,8 +14,9 @@ function removeItem(key) {
     window.localStorage.removeItem(key);
 }
 
-const vue = new Vue({
-    el: '#app',
+const { createApp } = Vue;
+
+const app = createApp({
     data() {
         const account = (rule, value, callback) => {
             if (this.SQLServerForm.linkType === 'db') {
@@ -520,6 +521,13 @@ const vue = new Vue({
         }
     }
 });
+
+app.use(ElementPlus);
+app.config.globalProperties.$message = ElementPlus.ElMessage;
+app.config.globalProperties.$confirm = ElementPlus.ElMessageBox.confirm;
+app.config.globalProperties.$prompt = ElementPlus.ElMessageBox.prompt;
+app.config.globalProperties.$notify = ElementPlus.ElNotification;
+const vue = app.mount('#app');
 
 function testSuccessMsg() {
     vue.testIsSuccess = true;

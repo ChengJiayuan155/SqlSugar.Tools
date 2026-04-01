@@ -1,6 +1,10 @@
-﻿@font-face {
+@font-face {
     font-family: 'code';
     src: url('fonts/MONACO.TTF') format('truetype');
+}
+html, body {
+    background: #2E3238;
+    margin: 0;
 }
 .dbTypeItem {
     transition:.6s;
@@ -71,10 +75,30 @@
     background: #272A2F !important;
     color: #42CAC7 !important;
 }
-.search > input {
-    background: #272A2F;
-    border: 0 !important;
-    color: #42CAC7;
+/* Element UI 旧写法 .search > input 在 Element Plus 2 中失效：输入框在 .el-input__wrapper 内 */
+.dbList .search.el-input {
+    --el-input-bg-color: #272A2F;
+    --el-input-text-color: #42CAC7;
+    --el-input-border-color: #1883D7;
+    --el-input-hover-border-color: #42CAC7;
+    --el-input-focus-border-color: #42CAC7;
+}
+.dbList .search.el-input .el-input__wrapper {
+    background-color: #272A2F !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
     border-bottom: 1px solid #1883D7 !important;
-    border-radius:0 !important;
+}
+.dbList .search.el-input .el-input__inner {
+    color: #42CAC7 !important;
+}
+.dbList .search.el-input .el-input__inner::placeholder {
+    color: rgba(255, 255, 255, 0.38);
+}
+.dbList .search.el-input .el-input__wrapper.is-focus {
+    box-shadow: none !important;
+    border-bottom-color: #42CAC7 !important;
+}
+.el-tree__empty-text {
+    color: rgba(255, 255, 255, 0.45);
 }

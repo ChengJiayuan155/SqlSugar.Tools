@@ -1,4 +1,4 @@
-﻿html {
+html {
     -webkit-touch-callout: none; /* iOS Safari */
     -webkit-user-select: none; /* Chrome/Safari/Opera */
     -moz-user-select: none; /* Firefox */
@@ -80,6 +80,20 @@ body{margin:0;padding:0;height:100%;width:100%}
     left:4px;
     right:0;
     margin:auto
+}
+/* Element Plus 无 el-icon 字体：槽位内 img/SVG；浅色圆形按钮上用深色图标 */
+#tool .tool-btn-icon {
+    color: #606266;
+}
+#tool .tool-btn-icon img {
+    display: block;
+    vertical-align: middle;
+    filter: brightness(0) saturate(100%);
+    opacity: 0.72;
+}
+#tool .tool-btn-icon svg {
+    display: block;
+    vertical-align: middle;
 }
 #td {
     position: fixed;

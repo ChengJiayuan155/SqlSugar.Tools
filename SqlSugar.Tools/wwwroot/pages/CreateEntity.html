@@ -1,24 +1,31 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" xmlns="http://www.w3.org/1999/xhtml" style="background:#2E3238">
 <head>
     <meta charset="utf-8" />
     <title>Create Entity</title>
-    <link href="../css/element.css" rel="stylesheet" />
+    <link href="../css/element-plus.css" rel="stylesheet" />
     <link href="../css/base.css" rel="stylesheet" />
     <link href="../css/highlight/tomorrow-night-eighties.css" rel="stylesheet" />
     <link href="../css/CreateEntity.css" rel="stylesheet" />
+    <link href="../css/element-plus-app.css" rel="stylesheet" />
 </head>
 <body>
     <div id="app" @keyup.ctrl.83="saveOneCode" style="margin:0 0 0px 40px;" v-loading.fullscreen.lock="loading" element-loading-background="rgba(0, 0, 0, 0.5)">
         <div id="tool">
             <el-tooltip class="item" effect="dark" content="退出程序" placement="right">
-                <el-button onclick="exit()" style="top:10px" class="tool-btn" icon="el-icon-close" circle size="small"></el-button>
+                <el-button onclick="exit()" style="top:10px" class="tool-btn tool-btn-icon" circle size="small">
+                    <img src="../svg/close-btn.svg" width="14" height="14" alt="" />
+                </el-button>
             </el-tooltip>
             <el-tooltip class="item" effect="dark" content="最大化" placement="right">
-                <el-button n-ui-command="maximize" style="top:60px" class="tool-btn" icon="el-icon-plus" circle size="small"></el-button>
+                <el-button n-ui-command="maximize" style="top:60px" class="tool-btn tool-btn-icon" circle size="small">
+                    <img src="../svg/max-btn.svg" width="14" height="14" alt="" />
+                </el-button>
             </el-tooltip>
             <el-tooltip class="item" effect="dark" content="最小化" placement="right">
-                <el-button n-ui-command="minimize" style="top:110px" class="tool-btn" icon="el-icon-minus" circle size="small"></el-button>
+                <el-button n-ui-command="minimize" style="top:110px" class="tool-btn tool-btn-icon" circle size="small">
+                    <img src="../svg/min-btn.svg" width="14" height="14" alt="" />
+                </el-button>
             </el-tooltip>
         </div>
         <div id="td">
@@ -65,7 +72,7 @@
         </div>
 
         <!--模版设置    start-->
-        <el-dialog width="1000px" top="10px" title="生成模版设置" :visible.sync="showSettingsDialog" :close-on-click-modal="false">
+        <el-dialog width="1000px" top="10px" title="生成模版设置" v-model="showSettingsDialog" :close-on-click-modal="false">
             <el-form ref="settingsForm" :model="settingsForm" label-width="180px">
                 <el-form-item label="导入的命名空间 : ">
                     <el-tooltip class="item" effect="dark" content="在这里输入的命名空间都会在实体类导入, 如输入 using System;" placement="top">
@@ -153,14 +160,16 @@
                     <el-radio v-model="settingsForm.propType" label="1">模版模式</el-radio>
                 </el-form-item>
             </el-form>
-            <div slot="footer" class="dialog-footer">
-                <el-button size="small" icon="el-icon-close" @click="showSettingsDialog = false" type="info">取 消</el-button>
-                <el-button size="small" icon="el-icon-check" @click="settingsSave" type="success">保 存</el-button>
+            <template #footer>
+            <div class="dialog-footer">
+                <el-button size="small" @click="showSettingsDialog = false" type="info">取消</el-button>
+                <el-button size="small" @click="settingsSave" type="success">保存</el-button>
             </div>
+            </template>
         </el-dialog>
         <!--模版设置      end-->
         <!--SQL Server连接框-->
-        <el-dialog width="600px" top="80px" title="添加SQL Server连接" :visible.sync="showSQLServerDialog" :close-on-click-modal="false" @closed="SQLServerDialogClosed">
+        <el-dialog width="600px" top="80px" title="添加SQL Server连接" v-model="showSQLServerDialog" :close-on-click-modal="false" @closed="SQLServerDialogClosed">
             <el-form ref="SQLServerForm" :model="SQLServerForm" label-width="100px" :rules="SQLServerFormRules">
                 <el-form-item label="连接名称: " prop="name">
                     <el-input v-model="SQLServerForm.name" placeholder="请输入连接名称"></el-input>
@@ -186,37 +195,43 @@
                     </el-select>
                 </el-form-item>
             </el-form>
-            <div slot="footer" class="dialog-footer">
-                <el-button size="small" icon="el-icon-setting" type="warning" @click="testSQLServerLink">测试连接(加载数据库)</el-button>
-                <el-button size="small" icon="el-icon-check" type="success" @click="selectDB">确 定</el-button>
-                <el-button size="small" icon="el-icon-close" @click="showSQLServerDialog = false" type="info">关 闭</el-button>
+            <template #footer>
+            <div class="dialog-footer">
+                <el-button size="small" type="warning" @click="testSQLServerLink">测试连接(加载数据库)</el-button>
+                <el-button size="small" type="success" @click="selectDB">确定</el-button>
+                <el-button size="small" @click="showSQLServerDialog = false" type="info">关闭</el-button>
             </div>
+            </template>
         </el-dialog>
         <!--SQL Server连接框-->
         <!--SQLite连接框-->
-        <el-dialog width="600px" top="80px" title="添加SQLite连接" :visible.sync="showSQLiteDialog" :close-on-click-modal="false" @closed="SQLiteDialogClosed">
+        <el-dialog width="600px" top="80px" title="添加SQLite连接" v-model="showSQLiteDialog" :close-on-click-modal="false" @closed="SQLiteDialogClosed">
             <el-form ref="SQLiteForm" :model="SQLiteForm" label-width="100px" :rules="SQLiteFormRules">
                 <el-form-item label="连接名称: " prop="name">
                     <el-input v-model="SQLiteForm.name" placeholder="请输入连接名称"></el-input>
                 </el-form-item>
                 <el-form-item label="数据文件: " prop="host">
                     <el-input v-model="SQLiteForm.host" placeholder="请输入DB文件地址或选择文件">
-                        <el-button slot="append" icon="el-icon-setting" @click="selectDBFile">选择DB文件</el-button>
+                        <template #append>
+                            <el-button @click="selectDBFile">选择DB文件</el-button>
+                        </template>
                     </el-input>
                 </el-form-item>
                 <el-form-item label="数据库密码: ">
                     <el-input v-model="SQLiteForm.pwd" placeholder="请输入数据库密码, 没有密码则不写"></el-input>
                 </el-form-item>
             </el-form>
-            <div slot="footer" class="dialog-footer">
-                <el-button size="small" icon="el-icon-setting" type="warning" @click="testSQLiteLink">测试连接</el-button>
-                <el-button size="small" icon="el-icon-check" type="success" @click="selectSQLiteDB">确 定</el-button>
-                <el-button size="small" icon="el-icon-close" @click="showSQLiteDialog = false" type="info">关 闭</el-button>
+            <template #footer>
+            <div class="dialog-footer">
+                <el-button size="small" type="warning" @click="testSQLiteLink">测试连接</el-button>
+                <el-button size="small" type="success" @click="selectSQLiteDB">确定</el-button>
+                <el-button size="small" @click="showSQLiteDialog = false" type="info">关闭</el-button>
             </div>
+            </template>
         </el-dialog>
         <!--SQLite连接框-->
         <!--mysql连接框-->
-        <el-dialog width="600px" top="80px" title="添加MySql连接" :visible.sync="showMySqlDialog" :close-on-click-modal="false" @closed="mySqlDialogClosed">
+        <el-dialog width="600px" top="80px" title="添加MySql连接" v-model="showMySqlDialog" :close-on-click-modal="false" @closed="mySqlDialogClosed">
             <el-form ref="MySqlForm" :model="MySqlForm" label-width="120px" :rules="MySqlFormRules">
                 <el-form-item label="连接名称: " prop="name">
                     <el-input v-model="MySqlForm.name" placeholder="请输入连接名称"></el-input>
@@ -239,15 +254,17 @@
                     </el-select>
                 </el-form-item>
             </el-form>
-            <div slot="footer" class="dialog-footer">
-                <el-button size="small" icon="el-icon-setting" type="warning" @click="testMySqlLink">测试连接(加载数据库)</el-button>
-                <el-button size="small" icon="el-icon-check" type="success" @click="selectMySqlDB">确 定</el-button>
-                <el-button size="small" icon="el-icon-close" @click="showMySqlDialog = false" type="info">关 闭</el-button>
+            <template #footer>
+            <div class="dialog-footer">
+                <el-button size="small" type="warning" @click="testMySqlLink">测试连接(加载数据库)</el-button>
+                <el-button size="small" type="success" @click="selectMySqlDB">确定</el-button>
+                <el-button size="small" @click="showMySqlDialog = false" type="info">关闭</el-button>
             </div>
+            </template>
         </el-dialog>
         <!--mysql连接框-->
         <!--postregsql连接框-->
-        <el-dialog width="600px" top="80px" title="添加PostregSQL连接" :visible.sync="showPGSqlDialog" :close-on-click-modal="false" @closed="PGSqlDialogClosed">
+        <el-dialog width="600px" top="80px" title="添加PostregSQL连接" v-model="showPGSqlDialog" :close-on-click-modal="false" @closed="PGSqlDialogClosed">
             <el-form ref="PGSqlForm" :model="PGSqlForm" label-width="120px" :rules="PGSqlFormRules">
                 <el-form-item label="连接名称: " prop="name">
                     <el-input v-model="PGSqlForm.name" placeholder="请输入连接名称"></el-input>
@@ -268,15 +285,17 @@
                     <el-input v-model="PGSqlForm.db" placeholder="请输入要连接的数据库"></el-input>
                 </el-form-item>
             </el-form>
-            <div slot="footer" class="dialog-footer">
-                <el-button size="small" icon="el-icon-setting" type="warning" @click="testPGSqlLink">测试连接</el-button>
-                <el-button size="small" icon="el-icon-check" type="success" @click="selectPGSqlDB">确 定</el-button>
-                <el-button size="small" icon="el-icon-close" @click="showPGSqlDialog = false" type="info">关 闭</el-button>
+            <template #footer>
+            <div class="dialog-footer">
+                <el-button size="small" type="warning" @click="testPGSqlLink">测试连接</el-button>
+                <el-button size="small" type="success" @click="selectPGSqlDB">确定</el-button>
+                <el-button size="small" @click="showPGSqlDialog = false" type="info">关闭</el-button>
             </div>
+            </template>
         </el-dialog>
         <!--postregsql连接框-->
         <!--Oracle连接框-->
-        <el-dialog width="600px" top="40px" title="添加Oracle连接" :visible.sync="showOracleDialog" :close-on-click-modal="false" @closed="OracleDialogClosed">
+        <el-dialog width="600px" top="40px" title="添加Oracle连接" v-model="showOracleDialog" :close-on-click-modal="false" @closed="OracleDialogClosed">
             <el-form ref="OracleForm" :model="OracleForm" label-width="140px" :rules="OracleFormRules">
                 <el-form-item label="连接名称: " prop="name">
                     <el-input v-model="OracleForm.name" placeholder="请输入连接名称"></el-input>
@@ -305,32 +324,32 @@
                     <el-input v-model="OracleForm.pwd" placeholder="请输入数据库密码"></el-input>
                 </el-form-item>
             </el-form>
-            <div slot="footer" class="dialog-footer">
-                <el-button size="small" icon="el-icon-setting" type="warning" @click="testOracleLink">测试连接</el-button>
-                <el-button size="small" icon="el-icon-check" type="success" @click="selectOracleDB">确 定</el-button>
-                <el-button size="small" icon="el-icon-close" @click="showOracleDialog = false" type="info">关 闭</el-button>
+            <template #footer>
+            <div class="dialog-footer">
+                <el-button size="small" type="warning" @click="testOracleLink">测试连接</el-button>
+                <el-button size="small" type="success" @click="selectOracleDB">确定</el-button>
+                <el-button size="small" @click="showOracleDialog = false" type="info">关闭</el-button>
             </div>
+            </template>
         </el-dialog>
         <!--Oracle连接框-->
         <!--管理数据库连接-->
-        <el-dialog width="600px" top="80px" title="管理数据库连接" :visible.sync="showManagerDialog" :close-on-click-modal="false">
+        <el-dialog width="600px" top="80px" title="管理数据库连接" v-model="showManagerDialog" :close-on-click-modal="false">
             <el-table :data="dbData" stripe style="width:100%" border height="380px">
                 <el-table-column type="index" width="50"></el-table-column>
                 <el-table-column prop="label" label="连接名称" min-width="200" show-overflow-tooltip></el-table-column>
-                <el-table-column fixed="right" label="操作" width="100">
-                    <template slot-scope="scope">
-                        <el-tooltip class="item" effect="dark" content="编辑此连接" placement="left">
-                            <el-button type="primary" icon="el-icon-edit" circle size="small" @click="editDB(scope.$index, scope.row.label)"></el-button>
-                        </el-tooltip>
-                        <el-tooltip class="item" effect="dark" content="删除此连接" placement="right">
-                            <el-button type="danger" icon="el-icon-delete" circle size="small" @click="deleteDB(scope.$index, scope.row.label)"></el-button>
-                        </el-tooltip>
+                <el-table-column fixed="right" label="操作" width="150">
+                    <template #default="scope">
+                        <el-button type="primary" size="small" link @click="editDB(scope.$index, scope.row.label)">编辑</el-button>
+                        <el-button type="danger" size="small" link @click="deleteDB(scope.$index, scope.row.label)">删除</el-button>
                     </template>
                 </el-table-column>
             </el-table>
-            <div slot="footer" class="dialog-footer">
-                <el-button size="small" icon="el-icon-close" @click="showManagerDialog = false" type="info">关 闭</el-button>
+            <template #footer>
+            <div class="dialog-footer">
+                <el-button size="small" @click="showManagerDialog = false" type="info">关闭</el-button>
             </div>
+            </template>
         </el-dialog>
         <!--管理数据库连接-->
     </div>
@@ -347,6 +366,6 @@
     // 或者 var editor = new E( document.getElementById('editor') )
     editor.create();
 </script>
-<script src="../js/vue.js"></script>
-<script src="../js/element.js"></script>
+<script src="../js/vue3.global.prod.js"></script>
+<script src="../js/element-plus.full.min.js"></script>
 <script src="../js/CreateEntity.js"></script>

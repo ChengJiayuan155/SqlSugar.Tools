@@ -1,27 +1,30 @@
-﻿Vue.component('treeAppend', {
-    template: '<span class="dbItem">\
-    <span style="" v-if="data.node.level === 1">\
-        <el-tooltip class="item" effect="dark" content="点击加载表列表" placement="right">\
-            <el-button style="padding: 2px 4px;" icon="el-icon-refresh" type="success" size="mini" @click="$root.loadingTables(data.node.data)"></el-button>\
-        </el-tooltip>\
-        <el-tooltip class="item" effect="dark" content="点击生成所有表实体类" placement="right">\
-            <el-button style="padding: 2px 4px;" icon="el-icon-download" type="success" size="mini" @click="$root.saveAllTables(data.node, data.node.data)"></el-button>\
-        </el-tooltip>\
-    </span>\
-    <span>\
-        <el-tooltip class="item" effect="dark" :content="data.node.label + \'单击预览, Ctrl + S可以保存\'" placement="right">\
-            <span v-if="data.node.level === 1" style="font-size:14px;"><span style="padding:0px"></span>{{data.node.label}}</span>\
-            <span v-else style="font-size:10px;" @click="$root.createOne(data.node, data.node.data)"><span style="padding:0px"></span>{{data.node.label}}</span>\
-        </el-tooltip>\
-    </span>\
-</span>',
+const { createApp, h } = Vue;
+
+const treeAppend = {
+    name: 'treeAppend',
+    template: `
+<span class="dbItem">
+    <span v-if="data.node.level === 1">
+        <el-tooltip class="item" effect="dark" content="点击加载表列表" placement="right">
+            <el-button style="padding: 2px 4px;" type="success" size="small" @click="$root.loadingTables(data.node.data)">加载表</el-button>
+        </el-tooltip>
+        <el-tooltip class="item" effect="dark" content="点击生成所有表实体类" placement="right">
+            <el-button style="padding: 2px 4px;" type="success" size="small" @click="$root.saveAllTables(data.node, data.node.data)">全部生成</el-button>
+        </el-tooltip>
+    </span>
+    <span>
+        <el-tooltip class="item" effect="dark" :content="data.node.label + ' 单击预览, Ctrl+S 保存'" placement="right">
+            <span v-if="data.node.level === 1" style="font-size:14px;"><span style="padding:0px"></span>{{data.node.label}}</span>
+            <span v-else style="font-size:10px;" @click="$root.createOne(data.node, data.node.data)"><span style="padding:0px"></span>{{data.node.label}}</span>
+        </el-tooltip>
+    </span>
+</span>`,
     props: {
         data: {}
     }
-});
+};
 
-const vue = new Vue({
-    el: "#app",
+const app = createApp({
     data() {
         const account = (rule, value, callback) => {
             if (this.SQLServerForm.linkType === 'db') {
@@ -274,12 +277,8 @@ const vue = new Vue({
             this.testIsSuccess = false;
             this.$refs['SQLServerForm'].clearValidate();
         },
-        renderContent: function (h, e) {
-            return h('treeAppend', {
-                props: {
-                    data: e
-                }
-            });
+        renderContent(_h, e) {
+            return h('treeAppend', { data: e });
         },
         testSQLServerLink() {
             this.$refs['SQLServerForm'].validate((valid) => {
@@ -656,6 +655,13 @@ const vue = new Vue({
         }
     }
 });
+
+app.component('treeAppend', treeAppend);
+app.use(ElementPlus);
+app.config.globalProperties.$message = ElementPlus.ElMessage;
+app.config.globalProperties.$confirm = ElementPlus.ElMessageBox.confirm;
+app.config.globalProperties.$prompt = ElementPlus.ElMessageBox.prompt;
+const vue = app.mount('#app');
 
 function addedDBData(dbInfo) {
     let dbData = getDBData();

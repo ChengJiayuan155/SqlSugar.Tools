@@ -1,0 +1,113 @@
+/**
+ * SqlSugar.Tools — Element Plus 全局 UI 补强（对话框底部、表单双按钮、按钮文字居中）
+ * 在 element-plus.css 之后引入。
+ */
+
+/* ---------- 对话框底部 ---------- */
+.dialog-footer,
+.app-dialog-footer {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 10px;
+    box-sizing: border-box;
+}
+
+.el-dialog__footer {
+    padding-top: 12px;
+}
+
+/* ---------- 表单内「左测试 / 右下一步」等双按钮行 ---------- */
+.el-form-item.app-form-actions .el-form-item__content {
+    display: flex !important;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: stretch;
+    justify-content: space-between;
+    margin-left: 0 !important;
+}
+
+.el-form-item.app-form-actions .el-button {
+    flex: 1 1 calc(50% - 5px);
+    min-width: 0;
+    margin: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center;
+    line-height: 1.4;
+    white-space: normal;
+    word-break: break-word;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+/* ---------- 按钮文字垂直居中（修复图标位留白导致的偏移） ---------- */
+.el-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    vertical-align: middle;
+}
+
+.el-button > span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1.35;
+}
+
+/* 圆形按钮仅图标时保持正圆 */
+.el-button.is-circle {
+    padding: 0;
+}
+
+/* ---------- 数据库迁移：侧栏切换箭头 ---------- */
+.left-db svg,
+.right-db svg {
+    display: block;
+    width: 28px;
+    height: 28px;
+    margin: auto;
+    color: #606266;
+    fill: currentColor;
+}
+
+.left-db:hover svg,
+.right-db:hover svg {
+    color: #303133;
+}
+
+/* ---------- 面包屑：不再使用 el-icon-* 作为分隔符类名 ---------- */
+.botom-nav .el-breadcrumb {
+    font-size: 12px;
+    line-height: 16px;
+}
+
+.botom-nav .el-breadcrumb__inner a {
+    font-weight: 500;
+}
+
+/* ---------- 全宽次要操作按钮堆叠 ---------- */
+.my-btn .el-button {
+    width: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 0 !important;
+    box-sizing: border-box;
+}
+
+/* ---------- 左侧栏纯文字圆形按钮（搜 / 编 / ?） ---------- */
+#tool .tool-btn-text {
+    color: #303133;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 0;
+}
+
+/* 表格内相邻文字按钮间距 */
+.el-table .el-button.is-link + .el-button.is-link {
+    margin-left: 8px;
+}

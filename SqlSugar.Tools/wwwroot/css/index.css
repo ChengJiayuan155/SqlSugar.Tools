@@ -1,4 +1,4 @@
-﻿.transition-box {
+.transition-box {
     -webkit-box-sizing: border-box;
     background-color: #409eff;
     border-radius: 4px;
@@ -97,15 +97,6 @@
 
 .panel-group .card-panel .card-panel-description .card-panel-num {
     font-size: 20px
-}
-#qq{
-    position:fixed;
-    width:100%;
-    bottom:10px;
-    left:45px;
-}
-#qq .qqTag{
-    cursor:pointer
 }
 #particles-js {
     position: fixed;
