@@ -1,8 +1,9 @@
 <!DOCTYPE html>
-<html lang="en" xmlns="http://www.w3.org/1999/xhtml" style="background:#2E3238">
+<html lang="zh-CN" xmlns="http://www.w3.org/1999/xhtml" style="background:#EFF1F4">
 <head>
     <meta charset="utf-8" />
-    <title>Create Entity</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>代码生成</title>
     <link href="../css/element-plus.css" rel="stylesheet" />
     <link href="../css/base.css" rel="stylesheet" />
     <link href="../css/highlight/tomorrow-night-eighties.css" rel="stylesheet" />
@@ -29,15 +30,15 @@
             </el-tooltip>
         </div>
         <div id="td">
-            <p class="left-title" style="height:100px">生 成 实 体 类</p>
+            <p class="left-title" style="height:100px">代 码 生 成</p>
         </div>
         <el-menu :default-active="activeIndex"
                  @select="handleSelect"
                  style="height:50px;"
                  mode="horizontal"
-                 background-color="#2E3238"
-                 text-color="#FFF"
-                 active-text-color="#42CAC7"
+                 background-color="#EFF1F4"
+                 text-color="#303133"
+                 active-text-color="#1883D7"
                  class="dbNav">
             <el-menu-item :class="{ 'dbTypeItem' : activeIndex != 1, 'dbTypeItemThis' : activeIndex == 1 }" index="1">
                 <img src="../svg/mssql.svg" style="transform:scale(.7)" />SQL Server
@@ -63,12 +64,36 @@
         </el-menu>
         <div style="width:100%;height:50px;"></div>
         <div class="dbList">
-            <el-input placeholder="输入表名搜索(模糊)" v-model="filterText" style="width:15vw;min-width:200px;position:fixed;z-index:1" class="search"></el-input>
-            <el-tree style="padding-top:40px;" ref="tree" class="dbList" :data="dbData" :props="defaultProps" :render-content="renderContent" :filter-node-method="filterNode"></el-tree>
+            <div class="dbList-head">
+                <el-input placeholder="输入表名搜索(模糊)" v-model="filterText" class="search"></el-input>
+                <div v-if="hasAnyLoadedTables" class="dbList-actions">
+                    <el-button size="small" type="primary" @click="openLayerDialog">分层生成</el-button>
+                    <el-button size="small" @click="selectAllTables">全选表</el-button>
+                    <el-button size="small" @click="clearTableChecks">清空</el-button>
+                </div>
+            </div>
+
+            <el-tree
+                     ref="tree"
+                     class="dbList"
+                     :data="dbData"
+                     :props="defaultProps"
+                     :filter-node-method="filterNode"
+                     @node-click="treeNodeClick"
+                     show-checkbox
+                     highlight-current></el-tree>
         </div>
 
         <div class="code" id="editor" spellcheck="false">
             <pre><code id="code" style="font-family:code"></code></pre>
+        </div>
+        <div style="position:fixed;right:16px;bottom:16px;z-index:9;background:#fff;border:1px solid #dcdfe6;border-radius:6px;padding:10px 12px;max-width:42vw" v-if="layerResult.done">
+            <div style="font-weight:600;color:#303133;">生成完成</div>
+            <div style="font-size:12px;color:#606266;margin-top:4px;">{{layerResult.message}}</div>
+            <div style="font-size:12px;color:#909399;margin-top:4px;word-break:break-all;">输出目录：{{layerResult.outputPath}}</div>
+            <div style="margin-top:8px;">
+                <el-button size="small" type="primary" @click="openOutputFolder">打开文件夹</el-button>
+            </div>
         </div>
 
         <!--模版设置    start-->
@@ -168,6 +193,89 @@
             </template>
         </el-dialog>
         <!--模版设置      end-->
+
+        <!--分层生成 start-->
+        <el-dialog width="720px" top="80px" title="分层生成" v-model="showLayerDialog" :close-on-click-modal="false">
+            <el-steps :active="layerStep" finish-status="success" simple style="margin-bottom:14px">
+                <el-step title="选择表"></el-step>
+                <el-step title="模板与层"></el-step>
+                <el-step title="开始生成"></el-step>
+            </el-steps>
+
+            <div v-if="layerStep===0" style="color:#606266;line-height:20px">
+                <div>请先在左侧树中勾选要生成的表（支持全选/清空）。</div>
+                <div style="margin-top:8px;color:#303133;">已勾选表数量：{{getCheckedTables().length}}</div>
+            </div>
+
+            <el-form v-if="layerStep===1" :model="layerForm" label-width="160px">
+                <el-form-item label="模板选择: ">
+                    <el-select v-model="layerForm.templateKey" style="width:100%">
+                        <el-option label="默认模板（推荐）" value="default"></el-option>
+                        <el-option label="简洁模板（少注释）" value="simple"></el-option>
+                    </el-select>
+                </el-form-item>
+                <el-form-item label="模板说明: ">
+                    <div style="color:#606266;line-height:18px">
+                        默认模板：规范注释 + 常用接口骨架；简洁模板：结构相同，注释更少（后续可继续扩展更多模板）。
+                    </div>
+                </el-form-item>
+                <el-form-item label="命名空间前缀: ">
+                    <el-input v-model="layerForm.rootNamespacePrefix" placeholder="例如：Company"></el-input>
+                </el-form-item>
+                <el-form-item label="项目名/模块名: ">
+                    <el-input v-model="layerForm.projectName" placeholder="例如：UserCenter"></el-input>
+                </el-form-item>
+                <el-form-item label="输出目录: ">
+                    <el-input v-model="layerForm.outputPath" placeholder="例如：D:\Users\14440\Desktop">
+                        <template #append>
+                            <el-button @click="selectLayerOutputFolder">选择文件夹</el-button>
+                        </template>
+                    </el-input>
+                    <div style="margin-top:6px;color:#909399;line-height:16px">
+                        会记住你上次使用的路径。生成时会自动在该目录下先创建“项目名/模块名”根文件夹。
+                    </div>
+                </el-form-item>
+                <el-form-item label="生成层: ">
+                    <el-checkbox v-model="layerForm.generateModel">Entity/Model</el-checkbox>
+                    <el-checkbox v-model="layerForm.generateCommon">Common</el-checkbox>
+                    <el-checkbox v-model="layerForm.generateDal">DAL</el-checkbox>
+                    <el-checkbox v-model="layerForm.generateBll">BLL</el-checkbox>
+                    <el-checkbox v-model="layerForm.generateWebApi">WebApi</el-checkbox>
+                    <el-checkbox v-model="layerForm.generateServices">Services注册</el-checkbox>
+                    <el-checkbox v-model="layerForm.generateWebApiBase">WebApi基础骨架(_base)</el-checkbox>
+                </el-form-item>
+                <el-form-item label="WebApi 入口拆分(Extensions): ">
+                    <el-checkbox v-model="layerForm.generateWebApiExtensions">生成 Extensions 模块</el-checkbox>
+                    <el-checkbox v-model="layerForm.generateWebApiProgramSkeleton">生成 Program.cs 示例</el-checkbox>
+                </el-form-item>
+                <el-form-item label="常用模块(可选): ">
+                    <el-checkbox v-model="layerForm.enableSwagger">Swagger</el-checkbox>
+                    <el-checkbox v-model="layerForm.enableCors">CORS</el-checkbox>
+                    <el-checkbox v-model="layerForm.enableJwtAuth">JWT鉴权</el-checkbox>
+                    <el-checkbox v-model="layerForm.enableGlobalException">统一异常返回</el-checkbox>
+                    <el-checkbox v-model="layerForm.enablePaging">分页封装</el-checkbox>
+                    <el-checkbox v-model="layerForm.enableNLog">NLog日志</el-checkbox>
+                    <el-checkbox v-model="layerForm.generateNLogConfig">生成 nlog.config</el-checkbox>
+                </el-form-item>
+            </el-form>
+
+            <div v-if="layerStep===2" style="color:#606266;line-height:20px">
+                <div>确认无误后点击“开始生成”。</div>
+                <div style="margin-top:8px;color:#303133;">勾选表：{{getCheckedTables().length}} 张</div>
+                <div style="margin-top:6px;color:#303133;">输出目录：{{layerForm.outputPath}}</div>
+                <div style="margin-top:6px;color:#303133;">项目根目录：{{layerForm.outputPath}}\\{{layerForm.projectName}}</div>
+            </div>
+
+            <template #footer>
+            <div class="dialog-footer">
+                <el-button size="small" @click="showLayerDialog = false" type="info">取消</el-button>
+                <el-button size="small" @click="prevLayerStep" type="warning" v-if="layerStep>0">上一步</el-button>
+                <el-button size="small" @click="nextLayerStep" type="primary" v-if="layerStep<2">下一步</el-button>
+                <el-button size="small" @click="exportSelectedLayers" type="success" v-if="layerStep===2">开始生成</el-button>
+            </div>
+            </template>
+        </el-dialog>
+        <!--分层生成 end-->
         <!--SQL Server连接框-->
         <el-dialog width="600px" top="80px" title="添加SQL Server连接" v-model="showSQLServerDialog" :close-on-click-modal="false" @closed="SQLServerDialogClosed">
             <el-form ref="SQLServerForm" :model="SQLServerForm" label-width="100px" :rules="SQLServerFormRules">

@@ -4,12 +4,14 @@ using Newtonsoft.Json;
 using SqlSugar.Tools.Model;
 using SqlSugar.Tools.SQLHelper;
 using SqlSugar.Tools.Tools;
+using SqlSugar.Tools.CodeGen;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Diagnostics;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -35,6 +37,39 @@ namespace SqlSugar.Tools
                     this.Close();
                     GC.Collect();
                 });
+            };
+            GlobalObject.AddFunction("openFolder").Execute += (func, args) =>
+            {
+                var path = ((args.Arguments.FirstOrDefault(p => p.IsString)?.StringValue) ?? string.Empty).Trim();
+                if (!string.IsNullOrWhiteSpace(path) && Directory.Exists(path))
+                {
+                    Process.Start("explorer.exe", path);
+                }
+            };
+            GlobalObject.AddFunction("selectFolder").Execute += (func, args) =>
+            {
+                var initPath = ((args.Arguments.FirstOrDefault(p => p.IsString)?.StringValue) ?? string.Empty).Trim();
+                if (string.IsNullOrWhiteSpace(initPath))
+                {
+                    initPath = @"D:\Users\14440\Desktop";
+                }
+                if (!Directory.Exists(initPath))
+                {
+                    try { Directory.CreateDirectory(initPath); } catch { }
+                }
+                using (var folderBrowserDialog = new FolderBrowserDialog
+                {
+                    SelectedPath = initPath,
+                    Description = "选择输出文件夹（将自动创建分层目录）"
+                })
+                {
+                    if (folderBrowserDialog.ShowDialog() == DialogResult.OK)
+                    {
+                        var selected = folderBrowserDialog.SelectedPath ?? string.Empty;
+                        var safe = selected.Replace("\\", "\\\\").Replace("'", "\\'");
+                        EvaluateJavascript($"setLayerOutputPath('{safe}')", (value, exception) => { });
+                    }
+                }
             };
             this.RegiestSQLServerFunc();
             this.RegiestSQLiteFunc();
@@ -267,6 +302,31 @@ namespace SqlSugar.Tools
                 {
                     MessageBox.Show("获取数据库连接字符串错误", "保存所有实体类", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     EvaluateJavascript("hideLoading()", (value, exception) => { });
+                }
+            };
+
+            var generateLayers = sqlServer.AddFunction("generateLayers"); //分层生成（多表勾选）
+            generateLayers.Execute += async (func, args) =>
+            {
+                var info = ((args.Arguments.FirstOrDefault(p => p.IsString)?.StringValue) ?? string.Empty).Trim();
+                if (string.IsNullOrWhiteSpace(info))
+                {
+                    MessageBox.Show("获取数据库连接字符串错误", "分层生成", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    EvaluateJavascript("hideLoading()", (value, exception) => { });
+                    return;
+                }
+                try
+                {
+                    await GenerateLayersInternal(info, DataBaseType.SQLServer);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message, "分层生成", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+                finally
+                {
+                    EvaluateJavascript("hideLoading()", (value, exception) => { });
+                    GC.Collect();
                 }
             };
         }
@@ -509,6 +569,31 @@ namespace SqlSugar.Tools
                     EvaluateJavascript("hideLoading()", (value, exception) => { });
                 }
             };
+
+            var generateLayers = sqlite.AddFunction("generateLayers"); //分层生成（多表勾选）
+            generateLayers.Execute += async (func, args) =>
+            {
+                var info = ((args.Arguments.FirstOrDefault(p => p.IsString)?.StringValue) ?? string.Empty).Trim();
+                if (string.IsNullOrWhiteSpace(info))
+                {
+                    MessageBox.Show("获取数据库连接字符串错误", "分层生成", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    EvaluateJavascript("hideLoading()", (value, exception) => { });
+                    return;
+                }
+                try
+                {
+                    await GenerateLayersInternal(info, DataBaseType.SQLite);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message, "分层生成", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+                finally
+                {
+                    EvaluateJavascript("hideLoading()", (value, exception) => { });
+                    GC.Collect();
+                }
+            };
         }
 
         /// <summary>
@@ -735,6 +820,31 @@ namespace SqlSugar.Tools
                     EvaluateJavascript("hideLoading()", (value, exception) => { });
                 }
             };
+
+            var generateLayers = mysql.AddFunction("generateLayers"); //分层生成（多表勾选）
+            generateLayers.Execute += async (func, args) =>
+            {
+                var info = ((args.Arguments.FirstOrDefault(p => p.IsString)?.StringValue) ?? string.Empty).Trim();
+                if (string.IsNullOrWhiteSpace(info))
+                {
+                    MessageBox.Show("获取数据库连接字符串错误", "分层生成", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    EvaluateJavascript("hideLoading()", (value, exception) => { });
+                    return;
+                }
+                try
+                {
+                    await GenerateLayersInternal(info, DataBaseType.MySQL);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message, "分层生成", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+                finally
+                {
+                    EvaluateJavascript("hideLoading()", (value, exception) => { });
+                    GC.Collect();
+                }
+            };
         }
 
         /// <summary>
@@ -956,6 +1066,31 @@ namespace SqlSugar.Tools
                 {
                     MessageBox.Show("获取数据库连接字符串错误", "保存所有实体类", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     EvaluateJavascript("hideLoading()", (value, exception) => { });
+                }
+            };
+
+            var generateLayers = pgsql.AddFunction("generateLayers"); //分层生成（多表勾选）
+            generateLayers.Execute += async (func, args) =>
+            {
+                var info = ((args.Arguments.FirstOrDefault(p => p.IsString)?.StringValue) ?? string.Empty).Trim();
+                if (string.IsNullOrWhiteSpace(info))
+                {
+                    MessageBox.Show("获取数据库连接字符串错误", "分层生成", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    EvaluateJavascript("hideLoading()", (value, exception) => { });
+                    return;
+                }
+                try
+                {
+                    await GenerateLayersInternal(info, DataBaseType.PostgreSQL);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message, "分层生成", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+                finally
+                {
+                    EvaluateJavascript("hideLoading()", (value, exception) => { });
+                    GC.Collect();
                 }
             };
         }
@@ -1181,6 +1316,987 @@ namespace SqlSugar.Tools
                     EvaluateJavascript("hideLoading()", (value, exception) => { });
                 }
             };
+
+            var generateLayers = oracle.AddFunction("generateLayers"); //分层生成（多表勾选）
+            generateLayers.Execute += async (func, args) =>
+            {
+                var info = ((args.Arguments.FirstOrDefault(p => p.IsString)?.StringValue) ?? string.Empty).Trim();
+                if (string.IsNullOrWhiteSpace(info))
+                {
+                    MessageBox.Show("获取数据库连接字符串错误", "分层生成", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    EvaluateJavascript("hideLoading()", (value, exception) => { });
+                    return;
+                }
+                try
+                {
+                    await GenerateLayersInternal(info, DataBaseType.Oracler);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message, "分层生成", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+                finally
+                {
+                    EvaluateJavascript("hideLoading()", (value, exception) => { });
+                    GC.Collect();
+                }
+            };
+        }
+
+        private async Task GenerateLayersInternal(string info, DataBaseType dbType)
+        {
+            var initPath = "";
+            if (File.Exists($"{Environment.CurrentDirectory}\\default.ini"))
+            {
+                initPath = File.ReadAllText($"{Environment.CurrentDirectory}\\default.ini", Encoding.Default);
+            }
+            if (string.IsNullOrWhiteSpace(initPath))
+            {
+                // 兜底默认路径（按用户要求）
+                initPath = @"D:\Users\14440\Desktop";
+            }
+
+            var infos = JsonConvert.DeserializeObject<Dictionary<string, string>>(info);
+            var settings = JsonConvert.DeserializeObject<SettingsModel>(infos["settings"]);
+            var layer = JsonConvert.DeserializeObject<Dictionary<string, object>>(infos["layer"]);
+            var tableList = JsonConvert.DeserializeObject<List<Dictionary<string, string>>>(infos["tableList"]);
+
+            var opt = new LayerGenOptions
+            {
+                RootNamespacePrefix = (layer.ContainsKey("rootNamespacePrefix") ? Convert.ToString(layer["rootNamespacePrefix"]) : "Company"),
+                ProjectName = (layer.ContainsKey("projectName") ? Convert.ToString(layer["projectName"]) : "Demo"),
+                OutputPath = (layer.ContainsKey("outputPath") ? Convert.ToString(layer["outputPath"]) : string.Empty),
+                GenerateModel = layer.ContainsKey("generateModel") && Convert.ToBoolean(layer["generateModel"]),
+                GenerateCommon = layer.ContainsKey("generateCommon") && Convert.ToBoolean(layer["generateCommon"]),
+                GenerateDal = layer.ContainsKey("generateDal") && Convert.ToBoolean(layer["generateDal"]),
+                GenerateBll = layer.ContainsKey("generateBll") && Convert.ToBoolean(layer["generateBll"]),
+                GenerateWebApi = layer.ContainsKey("generateWebApi") && Convert.ToBoolean(layer["generateWebApi"]),
+                GenerateServices = layer.ContainsKey("generateServices") && Convert.ToBoolean(layer["generateServices"]),
+                GenerateWebApiBase = layer.ContainsKey("generateWebApiBase") && Convert.ToBoolean(layer["generateWebApiBase"]),
+                GenerateWebApiExtensions = !layer.ContainsKey("generateWebApiExtensions") || Convert.ToBoolean(layer["generateWebApiExtensions"]),
+                GenerateWebApiProgramSkeleton = layer.ContainsKey("generateWebApiProgramSkeleton") && Convert.ToBoolean(layer["generateWebApiProgramSkeleton"]),
+                EnableSwagger = !layer.ContainsKey("enableSwagger") || Convert.ToBoolean(layer["enableSwagger"]),
+                EnableCors = !layer.ContainsKey("enableCors") || Convert.ToBoolean(layer["enableCors"]),
+                EnableJwtAuth = !layer.ContainsKey("enableJwtAuth") || Convert.ToBoolean(layer["enableJwtAuth"]),
+                EnableGlobalException = !layer.ContainsKey("enableGlobalException") || Convert.ToBoolean(layer["enableGlobalException"]),
+                EnablePaging = !layer.ContainsKey("enablePaging") || Convert.ToBoolean(layer["enablePaging"]),
+                EnableNLog = !layer.ContainsKey("enableNLog") || Convert.ToBoolean(layer["enableNLog"]),
+                GenerateNLogConfig = !layer.ContainsKey("generateNLogConfig") || Convert.ToBoolean(layer["generateNLogConfig"]),
+                GenerateAuth = false
+            };
+
+            var outputBase = (opt.OutputPath ?? string.Empty).Trim();
+            if (string.IsNullOrWhiteSpace(outputBase))
+            {
+                using (var folderBrowserDialog = new FolderBrowserDialog { SelectedPath = initPath, Description = "选择输出文件夹（将自动创建分层目录）" })
+                {
+                    if (folderBrowserDialog.ShowDialog() != DialogResult.OK)
+                    {
+                        return;
+                    }
+                    outputBase = folderBrowserDialog.SelectedPath;
+                }
+            }
+
+            // 先创建“项目根目录”（按用户要求：outputPath\projectName\ 下再生成 6 层）
+            var projectRoot = Path.Combine(outputBase, opt.ProjectName);
+            Directory.CreateDirectory(projectRoot);
+
+            {
+                var entityNames = new List<string>();
+                var filesCount = 0;
+
+                // 1) Model：按 generat/temp + 每表一个目录输出
+                if (opt.GenerateModel)
+                {
+                    var modelRoot = Path.Combine(projectRoot, opt.ModelNamespace);
+                    var modelGeneratRoot = Path.Combine(modelRoot, "generat");
+                    var modelTempRoot = Path.Combine(modelRoot, "temp");
+
+                    foreach (var t in tableList)
+                    {
+                        var rawTableName = t.ContainsKey("label") ? t["label"] : "";
+                        var tableDesc = t.ContainsKey("TableDesc") ? t["TableDesc"] : "";
+                        var entityName = (settings.ClassCapsCount > 0 ? rawTableName.SetLengthToUpperByStart((int)settings.ClassCapsCount) : rawTableName);
+                        entityNames.Add(entityName);
+
+                        var modelClassName = $"Model{entityName}";
+
+                        Directory.CreateDirectory(Path.Combine(modelGeneratRoot, entityName));
+                        Directory.CreateDirectory(Path.Combine(modelTempRoot, entityName));
+
+                        var settingsCopy = JsonConvert.DeserializeObject<SettingsModel>(JsonConvert.SerializeObject(settings));
+                        settingsCopy.EntityNamespace = opt.ModelNamespace;
+
+                        var code = await this.GetEntityCode(infos["linkString"], rawTableName, tableDesc, settingsCopy, dbType, false);
+
+                        // 把原本的 public class XXX 改成 public partial class ModelXXX，并修正构造函数名
+                        code = Regex.Replace(code, @"public\s+class\s+" + Regex.Escape(entityName) + @"\b", $"public partial class {modelClassName}");
+                        code = Regex.Replace(code, @"public\s+" + Regex.Escape(entityName) + @"\s*\(", $"public {modelClassName}(");
+
+                        var modelMappingPath = Path.Combine(modelGeneratRoot, entityName, $"{modelClassName}.cs");
+                        using (var sw = new StreamWriter(modelMappingPath, false, Encoding.UTF8))
+                        {
+                            await sw.WriteAsync(code ?? string.Empty);
+                        }
+                        filesCount++;
+
+                        // partial（扩展字段）
+                        var partialPath = Path.Combine(modelTempRoot, entityName, $"{modelClassName}_partial.cs");
+                        var partialContent =
+$@"using System;
+using SqlSugar;
+
+namespace {opt.ModelNamespace}
+{{
+    // 本文件用于扩展/导航/枚举等（temp：不参与数据库映射）
+    public partial class {modelClassName}
+    {{
+    }}
+}}";
+                        using (var sw = new StreamWriter(partialPath, false, Encoding.UTF8))
+                        {
+                            await sw.WriteAsync(partialContent);
+                        }
+                        filesCount++;
+
+                        // search（后台搜索类）
+                        var searchPath = Path.Combine(modelTempRoot, entityName, $"{modelClassName}_search.cs");
+                        var searchContent =
+$@"using System;
+
+namespace {opt.ModelNamespace}
+{{
+    // 本文件用于后台搜索/筛选参数（temp：由模板/业务补齐）
+    public partial class {modelClassName}_search
+    {{
+    }}
+}}";
+                        using (var sw = new StreamWriter(searchPath, false, Encoding.UTF8))
+                        {
+                            await sw.WriteAsync(searchContent);
+                        }
+                        filesCount++;
+                    }
+                }
+
+                // 2) scaffold：Common/DAL/BLL/WebApi
+                var files = new List<GeneratedFile>();
+                files.AddRange(LayerScaffoldBuilder.BuildCommonAndDalScaffold(opt));
+                if (opt.GenerateBll || opt.GenerateWebApi)
+                {
+                    files.AddRange(LayerScaffoldBuilder.BuildBllAndWebApiForEntities(opt, entityNames));
+                }
+                files.AddRange(BuildWebApiAdditionalFiles(opt, entityNames));
+
+                foreach (var f in files)
+                {
+                    var rel = f.RelativePath.Replace("/", "\\");
+                    string full;
+                    if (rel.StartsWith("Common\\"))
+                    {
+                        full = Path.Combine(projectRoot, opt.CommonNamespace, rel.Substring("Common\\".Length));
+                    }
+                    else if (rel.StartsWith("DAL\\"))
+                    {
+                        full = Path.Combine(projectRoot, opt.DalNamespace, rel.Substring("DAL\\".Length));
+                    }
+                    else if (rel.StartsWith("BLL\\"))
+                    {
+                        full = Path.Combine(projectRoot, opt.BllNamespace, rel.Substring("BLL\\".Length));
+                    }
+                    else if (rel.StartsWith("WebApi\\"))
+                    {
+                        full = Path.Combine(projectRoot, opt.WebApiNamespace, rel.Substring("WebApi\\".Length));
+                    }
+                    else
+                    {
+                        full = Path.Combine(projectRoot, rel);
+                    }
+
+                    var dir = Path.GetDirectoryName(full);
+                    if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
+                    using (var sw = new StreamWriter(full, false, Encoding.UTF8))
+                    {
+                        await sw.WriteAsync(f.Content ?? string.Empty);
+                    }
+                    filesCount++;
+                }
+
+                using (var sw = new StreamWriter($"{Environment.CurrentDirectory}\\default.ini"))
+                {
+                    // 记住“上级输出目录”（而不是 projectRoot），下次依旧从这个目录开始
+                    await sw.WriteAsync(outputBase);
+                }
+
+                var result = new
+                {
+                    message = $"分层生成完成：{opt.ProjectName}（{filesCount} 个文件）",
+                    outputPath = projectRoot,
+                    fileCount = filesCount
+                };
+                var json = HttpUtility.JavaScriptStringEncode(JsonConvert.SerializeObject(result));
+                EvaluateJavascript($"generateLayersSuccess('{json}')", (value, exception) => { });
+            }
+        }
+
+        private List<GeneratedFile> BuildWebApiAdditionalFiles(LayerGenOptions opt, List<string> entityNames)
+        {
+            var files = new List<GeneratedFile>();
+            if (opt == null) return files;
+
+            if (opt.GenerateWebApiBase)
+            {
+                files.Add(new GeneratedFile
+                {
+                    RelativePath = "WebApi/_base/_BaseApiController.cs",
+                    Content = $@"using Microsoft.AspNetCore.Mvc;
+
+namespace {opt.WebApiNamespace}._base
+{{
+    [ApiController]
+    [Route(""api/[controller]"")]
+    public class _BaseApiController : ControllerBase
+    {{
+    }}
+}}"
+                });
+                files.Add(new GeneratedFile
+                {
+                    RelativePath = "WebApi/_base/BaseApiController.cs",
+                    Content = $@"namespace {opt.WebApiNamespace}._base
+{{
+    public class BaseApiController : _BaseApiController
+    {{
+    }}
+}}"
+                });
+                files.Add(new GeneratedFile
+                {
+                    RelativePath = "WebApi/_base/BaseController.cs",
+                    Content = $@"using {opt.WebApiNamespace}._base.Results;
+
+namespace {opt.WebApiNamespace}._base
+{{
+    public class BaseController : BaseApiController
+    {{
+        protected SysResultString SuccessString(string msg = ""成功"") => SysResult.SuccessString(msg);
+        protected SysResultString ErrorString(string msg = ""失败"") => SysResult.ErrorString(msg);
+    }}
+}}"
+                });
+                files.Add(new GeneratedFile
+                {
+                    RelativePath = "WebApi/_base/Results/SysResult.cs",
+                    Content = $@"using System;
+using System.Collections.Generic;
+
+namespace {opt.WebApiNamespace}._base.Results
+{{
+    /// <summary>
+    /// 统一返回体（与 qingqia 生成器风格对齐）
+    /// code: 0=成功，其它=失败/异常
+    /// msg : 提示信息
+    /// data: 业务数据
+    /// </summary>
+    public class SysResult
+    {{
+        public int code {{ get; set; }}
+        public string errCode {{ get; set; }}
+        public string msg {{ get; set; }}
+        public object data {{ get; set; }}
+        public string traceId {{ get; set; }}
+        public long time {{ get; set; }}
+        public Dictionary<string, string[]> errors {{ get; set; }}
+
+        public static SysResult Ok(object data = null, string msg = ""成功"")
+        {{
+            return new SysResult {{ code = 0, msg = msg, data = data, time = DateTimeOffset.Now.ToUnixTimeMilliseconds() }};
+        }}
+
+        public static SysResult Fail(string msg = ""失败"", int code = 1, object data = null, string errCode = null, string traceId = null, Dictionary<string, string[]> errors = null)
+        {{
+            return new SysResult {{ code = code, msg = msg, data = data, errCode = errCode, traceId = traceId, errors = errors, time = DateTimeOffset.Now.ToUnixTimeMilliseconds() }};
+        }}
+
+        public static SysResultString SuccessString(string msg = ""成功"") => new SysResultString {{ code = 0, msg = msg }};
+        public static SysResultString ErrorString(string msg = ""失败"", int code = 1) => new SysResultString {{ code = code, msg = msg }};
+
+        public static SysResult<T> Ok<T>(T data, string msg = ""成功"")
+        {{
+            return new SysResult<T> {{ code = 0, msg = msg, data = data, time = DateTimeOffset.Now.ToUnixTimeMilliseconds() }};
+        }}
+
+        public static SysResult<T> Fail<T>(string msg = ""失败"", int code = 1, string errCode = null, string traceId = null, Dictionary<string, string[]> errors = null)
+        {{
+            return new SysResult<T> {{ code = code, msg = msg, errCode = errCode, traceId = traceId, errors = errors, time = DateTimeOffset.Now.ToUnixTimeMilliseconds() }};
+        }}
+
+        public static SysResult_layui_table Return_layui<T>(PagedResult<T> page, string msg = ""成功"")
+        {{
+            return new SysResult_layui_table
+            {{
+                code = 0,
+                msg = msg,
+                count = page == null ? 0 : page.total,
+                data = page == null ? new List<T>() : (page.list ?? new List<T>())
+            }};
+        }}
+    }}
+
+    public class SysResultString
+    {{
+        public int code {{ get; set; }}
+        public string errCode {{ get; set; }}
+        public string msg {{ get; set; }}
+        public string traceId {{ get; set; }}
+        public long time {{ get; set; }}
+    }}
+
+    public class SysResult<T>
+    {{
+        public int code {{ get; set; }}
+        public string errCode {{ get; set; }}
+        public string msg {{ get; set; }}
+        public T data {{ get; set; }}
+        public string traceId {{ get; set; }}
+        public long time {{ get; set; }}
+        public Dictionary<string, string[]> errors {{ get; set; }}
+    }}
+
+    public class SysResult_layui_table
+    {{
+        public int code {{ get; set; }}
+        public string errCode {{ get; set; }}
+        public string msg {{ get; set; }}
+        public int count {{ get; set; }}
+        public object data {{ get; set; }}
+        public string traceId {{ get; set; }}
+        public long time {{ get; set; }}
+    }}
+
+    public class PagedResult<T>
+    {{
+        public int total {{ get; set; }}
+        public List<T> list {{ get; set; }}
+    }}
+
+    public class formparam_PagerInfo_LayUI
+    {{
+        public int page {{ get; set; }} = 1;
+        public int limit {{ get; set; }} = 20;
+    }}
+
+    public class formbody_param_del
+    {{
+        public string ids {{ get; set; }}
+    }}
+
+    public class formbody_param_switch
+    {{
+        public string id {{ get; set; }}
+        public bool data {{ get; set; }}
+    }}
+}}"
+                });
+                files.Add(new GeneratedFile
+                {
+                    RelativePath = "WebApi/_base/HelperPowers/PowerMenu.cs",
+                    Content = $@"namespace {opt.WebApiNamespace}._base.HelperPowers
+{{
+    // 全局权限菜单入口，可按业务补齐
+    public partial class PowerMenu
+    {{
+    }}
+
+    public partial class PowerController
+    {{
+    }}
+
+    // 常用权限动作（可按业务扩展）
+    public enum PowerAction
+    {{
+        查看列表,
+        添加,
+        编辑,
+        删除
+    }}
+
+    // 以下特性用于让生成代码“即拷即用”，具体鉴权逻辑由宿主项目实现/替换
+    public class AttrControllerAttribute : System.Attribute
+    {{
+        public AttrControllerAttribute(string controller) {{ }}
+    }}
+
+    public class AttrKeyAttribute : System.Attribute
+    {{
+        public AttrKeyAttribute(string key) {{ }}
+    }}
+
+    public class HasPowerAttribute : System.Attribute
+    {{
+        public HasPowerAttribute(PowerAction action) {{ }}
+    }}
+}}"
+                });
+                files.Add(new GeneratedFile
+                {
+                    RelativePath = "WebApi/_base/DefaultController.cs",
+                    Content = $@"using Microsoft.AspNetCore.Mvc;
+using {opt.WebApiNamespace}._base.Results;
+
+namespace {opt.WebApiNamespace}._base
+{{
+    public class DefaultController : BaseController
+    {{
+        [HttpGet(""ping"")]
+        public SysResultString Ping() => SysResult.SuccessString(""ok"");
+    }}
+}}"
+                });
+                files.Add(new GeneratedFile
+                {
+                    RelativePath = "WebApi/_base/HomeController.cs",
+                    Content = $@"using Microsoft.AspNetCore.Mvc;
+
+namespace {opt.WebApiNamespace}._base
+{{
+    public class HomeController : BaseController
+    {{
+    }}
+}}"
+                });
+                files.Add(new GeneratedFile
+                {
+                    RelativePath = "WebApi/_base/LoginController.cs",
+                    Content = $@"using Microsoft.AspNetCore.Mvc;
+
+namespace {opt.WebApiNamespace}._base
+{{
+    public class LoginController : BaseController
+    {{
+    }}
+}}"
+                });
+                files.Add(new GeneratedFile
+                {
+                    RelativePath = "WebApi/_base/RedisController.cs",
+                    Content = $@"using Microsoft.AspNetCore.Mvc;
+
+namespace {opt.WebApiNamespace}._base
+{{
+    public class RedisController : BaseController
+    {{
+    }}
+}}"
+                });
+            }
+
+            if (opt.GenerateServices)
+            {
+                files.Add(new GeneratedFile
+                {
+                    RelativePath = "WebApi/Services/ServiceCollectionExtensions.cs",
+                    Content = BuildServiceRegistrationCode(opt, entityNames)
+                });
+            }
+
+            if (opt.GenerateWebApiExtensions)
+            {
+                // Extensions：让 Program.cs 极薄（builder.Services / app.Use 拆分）
+                files.Add(new GeneratedFile
+                {
+                    RelativePath = "WebApi/Extensions/AppHostExtensions.cs",
+                    Content = $@"using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace {opt.WebApiNamespace}.Extensions
+{{
+    /// <summary>
+    /// WebApi 宿主入口扩展：让 Program.cs 保持极薄。
+    /// </summary>
+    public static class AppHostExtensions
+    {{
+        /// <summary>
+        /// 注册应用所需服务（按模块拆分）。
+        /// </summary>
+        /// <param name=""services"">DI 容器</param>
+        /// <param name=""config"">配置</param>
+        /// <param name=""env"">宿主环境</param>
+        /// <returns>services</returns>
+        public static IServiceCollection AddAppServices(this IServiceCollection services, IConfiguration config, IWebHostEnvironment env)
+        {{
+            services
+                .AddLoggingModule(config, env)
+                .AddGeneratedLayerServices(config, env)
+                .AddMvcModule(config)
+                .AddCorsModule(config)
+                .AddSwaggerModule(config)
+                .AddJwtAuthModule(config);
+
+            return services;
+        }}
+
+        /// <summary>
+        /// 注册请求处理管道（中间件流水线，按模块拆分）。
+        /// </summary>
+        /// <param name=""app"">WebApplication</param>
+        /// <returns>app</returns>
+        public static WebApplication UseAppPipeline(this WebApplication app)
+        {{
+            app
+                .UseGlobalExceptionModule()
+                .UseCorsModule()
+                .UseSwaggerModule()
+                .UseJwtAuthModule();
+
+            app.MapControllers();
+            return app;
+        }}
+    }}
+}}"
+                });
+
+                // NLog：最常用日志（宿主需安装 NLog.Web.AspNetCore / NLog.Extensions.Logging）
+                files.Add(new GeneratedFile
+                {
+                    RelativePath = "WebApi/Extensions/ServiceRegistration/LoggingModuleExtensions.cs",
+                    Content = $@"using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using NLog.Extensions.Logging;
+using NLog.Web;
+
+namespace {opt.WebApiNamespace}.Extensions
+{{
+    /// <summary>
+    /// 日志模块（NLog）。宿主项目需安装 NLog 相关 NuGet 包，并在根目录提供 nlog.config。
+    /// </summary>
+    public static class LoggingModuleExtensions
+    {{
+        /// <summary>
+        /// 注册 NLog 日志（建议在任何依赖 ILogger&lt;T&gt; 的服务之前调用）。
+        /// </summary>
+        /// <param name=""services"">DI 容器</param>
+        /// <param name=""config"">配置</param>
+        /// <param name=""env"">环境</param>
+        /// <returns>services</returns>
+        public static IServiceCollection AddLoggingModule(this IServiceCollection services, IConfiguration config, IWebHostEnvironment env)
+        {{
+            if (!{(opt.EnableNLog ? "true" : "false")}) return services;
+
+            services.AddLogging(builder =>
+            {{
+                builder.ClearProviders();
+                builder.SetMinimumLevel(LogLevel.Trace);
+                builder.AddNLog();
+            }});
+
+            // 让 NLog 读取根目录 nlog.config（如果你把配置放别处，可自行改）
+            NLogBuilder.ConfigureNLog(""nlog.config"");
+            return services;
+        }}
+    }}
+}}"
+                });
+
+                if (opt.GenerateNLogConfig)
+                {
+                    files.Add(new GeneratedFile
+                    {
+                        // 放在 WebApi 项目根目录，方便宿主直接复制到输出根
+                        RelativePath = "WebApi/nlog.config",
+                        Content = @"<?xml version=""1.0"" encoding=""utf-8"" ?>
+<nlog xmlns=""http://www.nlog-project.org/schemas/NLog.xsd""
+      xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance""
+      autoReload=""true""
+      internalLogLevel=""Warn""
+      internalLogFile=""${basedir}/logs/nlog-internal.log"">
+
+  <targets>
+    <target xsi:type=""File""
+            name=""allfile""
+            fileName=""${basedir}/logs/${shortdate}.log""
+            layout=""${longdate}|${uppercase:${level}}|${logger}|${message} ${exception:format=ToString}"" />
+    <target xsi:type=""Console""
+            name=""console""
+            layout=""${longdate}|${uppercase:${level}}|${logger}|${message} ${exception:format=ToString}"" />
+  </targets>
+
+  <rules>
+    <logger name=""*"" minlevel=""Info"" writeTo=""console,allfile"" />
+  </rules>
+</nlog>
+"
+                    });
+                }
+
+                files.Add(new GeneratedFile
+                {
+                    RelativePath = "WebApi/Extensions/ServiceRegistration/GeneratedLayerExtensions.cs",
+                    Content = $@"using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using SqlSugar;
+
+using {opt.CommonNamespace};
+using {opt.DalNamespace};
+using {opt.WebApiNamespace}.Services;
+
+namespace {opt.WebApiNamespace}.Extensions
+{{
+    public static class GeneratedLayerExtensions
+    {{
+        /// <summary>
+        /// 注册生成层（Common/DAL/BLL）所需依赖。宿主项目可在此处替换 SqlSugarScope 的构建方式（单库/多库/读写分离）。
+        /// </summary>
+        public static IServiceCollection AddGeneratedLayerServices(this IServiceCollection services, IConfiguration config, IWebHostEnvironment env)
+        {{
+            // 1) SqlSugarScope（示例：从配置读取连接串；可按项目改成多库）
+            services.AddScoped(sp =>
+            {{
+                var connStr = config.GetConnectionString(""Default"") ?? string.Empty;
+                var db = new SqlSugarScope(new ConnectionConfig
+                {{
+                    ConnectionString = connStr,
+                    DbType = DbType.SqlServer,
+                    IsAutoCloseConnection = true
+                }});
+                return db;
+            }});
+
+            // 2) DIP：DbContext / Repository
+            services.AddScoped<ISqlSugarDbContext, SqlSugarDbContext>();
+            services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+
+            // 3) 生成的 BLL（每表一个）
+            services.AddGeneratedServices();
+            return services;
+        }}
+    }}
+}}"
+                });
+
+                files.Add(new GeneratedFile
+                {
+                    RelativePath = "WebApi/Extensions/ServiceRegistration/MvcModuleExtensions.cs",
+                    Content = $@"using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace {opt.WebApiNamespace}.Extensions
+{{
+    /// <summary>
+    /// MVC 模块：控制器/JSON 等。
+    /// </summary>
+    public static class MvcModuleExtensions
+    {{
+        /// <summary>
+        /// 注册 MVC/Controllers。
+        /// </summary>
+        /// <param name=""services"">DI 容器</param>
+        /// <param name=""config"">配置</param>
+        /// <returns>services</returns>
+        public static IServiceCollection AddMvcModule(this IServiceCollection services, IConfiguration config)
+        {{
+            services.AddControllers();
+            return services;
+        }}
+    }}
+}}"
+                });
+
+                files.Add(new GeneratedFile
+                {
+                    RelativePath = "WebApi/Extensions/ServiceRegistration/CorsModuleExtensions.cs",
+                    Content = $@"using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace {opt.WebApiNamespace}.Extensions
+{{
+    /// <summary>
+    /// 跨域模块（CORS）。
+    /// </summary>
+    public static class CorsModuleExtensions
+    {{
+        public const string DefaultCorsPolicyName = ""default_cors"";
+
+        /// <summary>
+        /// 注册 CORS 策略。
+        /// </summary>
+        /// <param name=""services"">DI 容器</param>
+        /// <param name=""config"">配置</param>
+        /// <returns>services</returns>
+        public static IServiceCollection AddCorsModule(this IServiceCollection services, IConfiguration config)
+        {{
+            if (!{(opt.EnableCors ? "true" : "false")}) return services;
+
+            services.AddCors(options =>
+            {{
+                options.AddPolicy(DefaultCorsPolicyName, p =>
+                    p.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
+            }});
+            return services;
+        }}
+
+        /// <summary>
+        /// 启用 CORS 中间件。
+        /// </summary>
+        /// <param name=""app"">WebApplication</param>
+        /// <returns>app</returns>
+        public static WebApplication UseCorsModule(this WebApplication app)
+        {{
+            if (!{(opt.EnableCors ? "true" : "false")}) return app;
+            app.UseCors(DefaultCorsPolicyName);
+            return app;
+        }}
+    }}
+}}"
+                });
+
+                files.Add(new GeneratedFile
+                {
+                    RelativePath = "WebApi/Extensions/ServiceRegistration/SwaggerModuleExtensions.cs",
+                    Content = $@"using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace {opt.WebApiNamespace}.Extensions
+{{
+    /// <summary>
+    /// Swagger/OpenAPI 模块。
+    /// </summary>
+    public static class SwaggerModuleExtensions
+    {{
+        /// <summary>
+        /// 注册 Swagger 服务。
+        /// </summary>
+        /// <param name=""services"">DI 容器</param>
+        /// <param name=""config"">配置</param>
+        /// <returns>services</returns>
+        public static IServiceCollection AddSwaggerModule(this IServiceCollection services, IConfiguration config)
+        {{
+            if (!{(opt.EnableSwagger ? "true" : "false")}) return services;
+
+            services.AddEndpointsApiExplorer();
+            services.AddSwaggerGen();
+            return services;
+        }}
+
+        /// <summary>
+        /// 启用 Swagger 中间件。
+        /// </summary>
+        /// <param name=""app"">WebApplication</param>
+        /// <returns>app</returns>
+        public static WebApplication UseSwaggerModule(this WebApplication app)
+        {{
+            if (!{(opt.EnableSwagger ? "true" : "false")}) return app;
+
+            app.UseSwagger();
+            app.UseSwaggerUI();
+            return app;
+        }}
+    }}
+}}"
+                });
+
+                files.Add(new GeneratedFile
+                {
+                    RelativePath = "WebApi/Extensions/ServiceRegistration/JwtAuthModuleExtensions.cs",
+                    Content = $@"using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+
+namespace {opt.WebApiNamespace}.Extensions
+{{
+    /// <summary>
+    /// JWT 鉴权模块（最小可运行版本）。
+    /// </summary>
+    public static class JwtAuthModuleExtensions
+    {{
+        /// <summary>
+        /// 注册 JWT 认证与授权。
+        /// </summary>
+        /// <param name=""services"">DI 容器</param>
+        /// <param name=""config"">配置</param>
+        /// <returns>services</returns>
+        public static IServiceCollection AddJwtAuthModule(this IServiceCollection services, IConfiguration config)
+        {{
+            if (!{(opt.EnableJwtAuth ? "true" : "false")}) return services;
+
+            var key = config[""jwt:key""] ?? ""change_me"";
+            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                .AddJwtBearer(options =>
+                {{
+                    options.TokenValidationParameters = new TokenValidationParameters
+                    {{
+                        ValidateIssuer = false,
+                        ValidateAudience = false,
+                        ValidateIssuerSigningKey = true,
+                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key))
+                    }};
+                }});
+
+            services.AddAuthorization();
+            return services;
+        }}
+
+        /// <summary>
+        /// 启用 JWT 认证/授权中间件。
+        /// </summary>
+        /// <param name=""app"">WebApplication</param>
+        /// <returns>app</returns>
+        public static WebApplication UseJwtAuthModule(this WebApplication app)
+        {{
+            if (!{(opt.EnableJwtAuth ? "true" : "false")}) return app;
+            app.UseAuthentication();
+            app.UseAuthorization();
+            return app;
+        }}
+    }}
+}}"
+                });
+
+                files.Add(new GeneratedFile
+                {
+                    RelativePath = "WebApi/Extensions/Middleware/GlobalExceptionMiddleware.cs",
+                    Content = $@"using Microsoft.AspNetCore.Http;
+using System;
+using System.Threading.Tasks;
+using {opt.WebApiNamespace}._base.Results;
+
+namespace {opt.WebApiNamespace}.Extensions.Middleware
+{{
+    /// <summary>
+    /// 全局异常处理中间件：捕获异常并转换为统一返回体（SysResult）。
+    /// </summary>
+    public class GlobalExceptionMiddleware
+    {{
+        private readonly RequestDelegate _next;
+        public GlobalExceptionMiddleware(RequestDelegate next) {{ _next = next; }}
+
+        /// <summary>
+        /// 执行中间件。
+        /// </summary>
+        /// <param name=""context"">HttpContext</param>
+        /// <returns>Task</returns>
+        public async Task Invoke(HttpContext context)
+        {{
+            try
+            {{
+                await _next(context);
+            }}
+            catch (Exception ex)
+            {{
+                context.Response.StatusCode = 200;
+                context.Response.ContentType = ""application/json; charset=utf-8"";
+                var traceId = context.TraceIdentifier;
+                var payload = SysResult.Fail(ex.Message, 500, data: null, errCode: ""EXCEPTION"", traceId: traceId);
+                await context.Response.WriteAsJsonAsync(payload);
+            }}
+        }}
+    }}
+}}"
+                });
+
+                files.Add(new GeneratedFile
+                {
+                    RelativePath = "WebApi/Extensions/ServiceRegistration/GlobalExceptionModuleExtensions.cs",
+                    Content = $@"using Microsoft.AspNetCore.Builder;
+using {opt.WebApiNamespace}.Extensions.Middleware;
+
+namespace {opt.WebApiNamespace}.Extensions
+{{
+    /// <summary>
+    /// 全局异常模块：将异常转换为统一返回体。
+    /// </summary>
+    public static class GlobalExceptionModuleExtensions
+    {{
+        /// <summary>
+        /// 启用全局异常处理中间件。
+        /// </summary>
+        /// <param name=""app"">WebApplication</param>
+        /// <returns>app</returns>
+        public static WebApplication UseGlobalExceptionModule(this WebApplication app)
+        {{
+            if (!{(opt.EnableGlobalException ? "true" : "false")}) return app;
+            app.UseMiddleware<GlobalExceptionMiddleware>();
+            return app;
+        }}
+    }}
+}}"
+                });
+
+                if (opt.GenerateWebApiProgramSkeleton)
+                {
+                    files.Add(new GeneratedFile
+                    {
+                        RelativePath = "WebApi/Program.sample.cs",
+                        Content = $@"using {opt.WebApiNamespace}.Extensions;
+
+var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddAppServices(builder.Configuration, builder.Environment);
+
+var app = builder.Build();
+app.UseAppPipeline();
+
+app.Run();
+"
+                    });
+                }
+            }
+
+            if (opt.GenerateWebApiBase)
+            {
+                foreach (var n in entityNames ?? new List<string>())
+                {
+                    files.Add(new GeneratedFile
+                    {
+                        RelativePath = $"WebApi/_base/HelperPowers/PowerMenu_{n}.cs",
+                        Content = $@"namespace {opt.WebApiNamespace}._base.HelperPowers
+{{
+    // 每表权限声明（按 qingqia 习惯生成）
+    public partial class PowerMenu
+    {{
+        public const string {n} = ""menu_{n}"";
+    }}
+
+    public partial class PowerController
+    {{
+        public const string {n} = nameof({opt.WebApiNamespace}.{n}Controller);
+    }}
+}}"
+                    });
+                }
+            }
+
+            return files;
+        }
+
+        private string BuildServiceRegistrationCode(LayerGenOptions opt, List<string> entityNames)
+        {
+            var lines = new StringBuilder();
+            lines.AppendLine("using Microsoft.Extensions.DependencyInjection;");
+            lines.AppendLine($"using {opt.BllNamespace};");
+            lines.AppendLine();
+            lines.AppendLine($"namespace {opt.WebApiNamespace}.Services");
+            lines.AppendLine("{");
+            lines.AppendLine("    public static class ServiceCollectionExtensions");
+            lines.AppendLine("    {");
+            lines.AppendLine("        public static IServiceCollection AddGeneratedServices(this IServiceCollection services)");
+            lines.AppendLine("        {");
+            foreach (var n in entityNames ?? new List<string>())
+            {
+                lines.AppendLine($"            services.AddScoped<Bll{n}>();");
+            }
+            lines.AppendLine("            return services;");
+            lines.AppendLine("        }");
+            lines.AppendLine("    }");
+            lines.AppendLine("}");
+            return lines.ToString();
         }
 
         public static void ShowWindow()
@@ -1342,6 +2458,35 @@ ORDER BY
                     return Type.GetType("System.Guid", true, true);
                 default:
                     return Type.GetType(type, true, true);
+            }
+        }
+
+        private static string ToCSharpShortTypeName(string rawTypeName)
+        {
+            var t = (rawTypeName ?? string.Empty).Trim();
+            if (t.Length == 0) return t;
+
+            // 常见 CLR 全名 => C# 友好短名/别名
+            switch (t)
+            {
+                case "System.Boolean": return "bool";
+                case "System.Byte": return "byte";
+                case "System.SByte": return "sbyte";
+                case "System.Char": return "char";
+                case "System.Decimal": return "decimal";
+                case "System.Double": return "double";
+                case "System.Single": return "float";
+                case "System.Int32": return "int";
+                case "System.UInt32": return "uint";
+                case "System.Int64": return "long";
+                case "System.UInt64": return "ulong";
+                case "System.Int16": return "short";
+                case "System.UInt16": return "ushort";
+                case "System.String": return "string";
+                case "System.Object": return "object";
+                case "System.DateTime": return "DateTime";
+                case "System.Guid": return "Guid";
+                default: return t;
             }
         }
 
@@ -1525,7 +2670,15 @@ WHERE
             StringBuilder codeString)
         {
             string tableName = (settings.ClassCapsCount > 0 ? nodeName.SetLengthToUpperByStart((int)settings.ClassCapsCount) : nodeName);
-            codeString.Append($@"using SqlSugar;{(string.IsNullOrWhiteSpace(settings.Namespace) ? "" : $"{Environment.NewLine}{settings.Namespace.Trim()}")}
+            var extraUsings = (settings.Namespace ?? string.Empty).Trim();
+            // 生成代码常用：DateTime/Guid 等需要 using System;
+            // 即使用户未配置，也自动补齐，避免出现 System.DateTime 这种不友好的全名。
+            if (!Regex.IsMatch(extraUsings, @"(^|\r?\n)\s*using\s+System\s*;\s*(\r?\n|$)", RegexOptions.IgnoreCase))
+            {
+                extraUsings = (string.IsNullOrWhiteSpace(extraUsings) ? "using System;" : $"using System;{Environment.NewLine}{extraUsings}");
+            }
+
+            codeString.Append($@"using SqlSugar;{(string.IsNullOrWhiteSpace(extraUsings) ? "" : $"{Environment.NewLine}{extraUsings}")}
 
 namespace {settings.EntityNamespace.Trim()}
 {{
@@ -1594,12 +2747,14 @@ namespace {settings.EntityNamespace.Trim()}
                     }
                     Type ttttt = this.GetTypeByString(dr[dataTypeName].ToString());
                     codeString.Replace("-isNullable-", dr[allowDBNullName].ToString() == "True" ? "true" : "false");
+                    var rawTypeName = dr[dataTypeName].ToString();
+                    var shortTypeName = ToCSharpShortTypeName(rawTypeName);
                     if (ttttt.IsValueType && dr[allowDBNullName].ToString() == "True")
                     {
-                        codeString.Replace("-dbType-", isYuLan ? $"<span style=\"color:#23C645\">{dr[dataTypeName].ToString()}?</span>" : dr[dataTypeName].ToString() + "?");  //替换数据类型
+                        codeString.Replace("-dbType-", isYuLan ? $"<span style=\"color:#23C645\">{shortTypeName}?</span>" : shortTypeName + "?");  //替换数据类型
                         if (settings.PropDefault)
                         {
-                            codeString.Replace("-value-", $"value ?? default({(isYuLan ? $"<span style=\"color:#23C645\">{dr[dataTypeName].ToString()}</span>" : dr[dataTypeName].ToString())})");
+                            codeString.Replace("-value-", $"value ?? default({(isYuLan ? $"<span style=\"color:#23C645\">{shortTypeName}</span>" : shortTypeName)})");
                         }
                         else
                         {
@@ -1608,14 +2763,14 @@ namespace {settings.EntityNamespace.Trim()}
                     }
                     else if (ttttt.IsValueType)
                     {
-                        codeString.Replace("-dbType-", isYuLan ? $"<span style=\"color:#23C645\">{dr[dataTypeName].ToString()}</span>" : dr[dataTypeName].ToString());  //替换数据类型
+                        codeString.Replace("-dbType-", isYuLan ? $"<span style=\"color:#23C645\">{shortTypeName}</span>" : shortTypeName);  //替换数据类型
                         codeString.Replace("-value-", "value");
                     }
                     else
                     {
-                        if (dr[dataTypeName].ToString() == "System.String")
+                        if (rawTypeName == "System.String" || shortTypeName == "string")
                         {
-                            codeString.Replace("-dbType-", isYuLan ? $"<span style=\"color:red\">{dr[dataTypeName].ToString()}</span>" : dr[dataTypeName].ToString());  //替换数据类型
+                            codeString.Replace("-dbType-", isYuLan ? $"<span style=\"color:red\">{shortTypeName}</span>" : shortTypeName);  //替换数据类型
                             if (settings.PropTrim)
                             {
                                 codeString.Replace("-value-", "value?.Trim()");
@@ -1627,7 +2782,7 @@ namespace {settings.EntityNamespace.Trim()}
                         }
                         else
                         {
-                            codeString.Replace("-dbType-", isYuLan ? $"<span style=\"color:red\">{dr[dataTypeName].ToString()}</span>" : dr[dataTypeName].ToString());  //替换数据类型
+                            codeString.Replace("-dbType-", isYuLan ? $"<span style=\"color:red\">{shortTypeName}</span>" : shortTypeName);  //替换数据类型
                             codeString.Replace("-value-", "value");
                         }
                     }
@@ -1713,12 +2868,14 @@ namespace {settings.EntityNamespace.Trim()}
                     }
                     Type ttttt = this.GetTypeByString(dr[dataTypeName].ToString());
                     codeString.Replace("-isNullable-", dr[allowDBNullName].ToString() == "True" ? "true" : "false");
+                    var rawTypeName = dr[dataTypeName].ToString();
+                    var shortTypeName = ToCSharpShortTypeName(rawTypeName);
                     if (ttttt.IsValueType && dr[allowDBNullName].ToString() == "True")
                     {
-                        codeString.Replace("-dbType-", isYuLan ? $"<span style=\"color:#23C645\">{dr[dataTypeName].ToString()}?</span>" : dr[dataTypeName].ToString() + "?");  //替换数据类型
+                        codeString.Replace("-dbType-", isYuLan ? $"<span style=\"color:#23C645\">{shortTypeName}?</span>" : shortTypeName + "?");  //替换数据类型
                         if (settings.PropDefault)
                         {
-                            codeString.Replace("-value-", $"value ?? default({(isYuLan ? $"<span style=\"color:#23C645\">{dr[dataTypeName].ToString()}</span>" : dr[dataTypeName].ToString())})");
+                            codeString.Replace("-value-", $"value ?? default({(isYuLan ? $"<span style=\"color:#23C645\">{shortTypeName}</span>" : shortTypeName)})");
                         }
                         else
                         {
@@ -1727,14 +2884,14 @@ namespace {settings.EntityNamespace.Trim()}
                     }
                     else if (ttttt.IsValueType)
                     {
-                        codeString.Replace("-dbType-", isYuLan ? $"<span style=\"color:#23C645\">{dr[dataTypeName].ToString()}</span>" : dr[dataTypeName].ToString());  //替换数据类型
+                        codeString.Replace("-dbType-", isYuLan ? $"<span style=\"color:#23C645\">{shortTypeName}</span>" : shortTypeName);  //替换数据类型
                         codeString.Replace("-value-", "value");
                     }
                     else
                     {
-                        if (dr[dataTypeName].ToString() == "System.String")
+                        if (rawTypeName == "System.String" || shortTypeName == "string")
                         {
-                            codeString.Replace("-dbType-", isYuLan ? $"<span style=\"color:red\">{dr[dataTypeName].ToString()}</span>" : dr[dataTypeName].ToString());  //替换数据类型
+                            codeString.Replace("-dbType-", isYuLan ? $"<span style=\"color:red\">{shortTypeName}</span>" : shortTypeName);  //替换数据类型
                             if (settings.PropTrim)
                             {
                                 codeString.Replace("-value-", "value?.Trim()");
@@ -1746,7 +2903,7 @@ namespace {settings.EntityNamespace.Trim()}
                         }
                         else
                         {
-                            codeString.Replace("-dbType-", isYuLan ? $"<span style=\"color:red\">{dr[dataTypeName].ToString()}</span>" : dr[dataTypeName].ToString());  //替换数据类型
+                            codeString.Replace("-dbType-", isYuLan ? $"<span style=\"color:red\">{shortTypeName}</span>" : shortTypeName);  //替换数据类型
                             codeString.Replace("-value-", "value");
                         }
                     }

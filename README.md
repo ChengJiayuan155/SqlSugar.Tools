@@ -4,7 +4,7 @@
 
 - **连接多种数据库**：SQL Server / MySQL / PostgreSQL / Oracle / SQLite
 - **生成实体映射类**：自动带上 SqlSugar 特性（表注释、列注释、主键、自增、必填/可空）
-- **（增强中）分层代码生成**：按“标准 MVC/分层架构”生成 Entity / DAL / BLL / Common / WebApi（可选 Auth）等项目骨架，并支持导航属性、枚举等自动生成
+- **分层代码生成（增强版）**：按“原公司模板生成器”风格输出 **Model/DAL/BLL/Common/WebApi**，并额外输出 `_base / Services / PowerMenu / Model partial+search` 等，让项目“拷贝进去即可跑”，再按业务补齐控制器逻辑即可。
 
 > 本文档以“你打开工具之后，如何从 0 到 1 生成出规范代码”为主线，包含命名规则、注释规范、枚举/导航规范、输出结构、常见问题。
 
@@ -14,7 +14,7 @@
 
 ### 1. 打开工具
 
-启动后进入首页，点击 **实体类生成**。
+启动后进入首页，点击 **代码生成**。
 
 ### 2. 添加数据库连接
 
@@ -33,13 +33,13 @@
 连接成功后左侧会加载表列表：
 
 - 支持输入表名进行模糊搜索
-- 点击某张表即可预览生成代码
+- 点击某张表即可预览生成代码（右侧）
 
 ### 4. 预览 / 保存
 
 - **预览**：点击表即可在右侧看到代码
-- **保存单表**：保存当前表实体
-- **保存全部表**：选择目录后批量生成
+- **保存单表**：预览后按 `Ctrl+S` 保存单表
+- **分层生成**：勾选表 → 分层生成向导 → 选择模板/层 → 开始生成 → 生成完成可一键打开目录
 
 ---
 
@@ -118,19 +118,29 @@
 
 ---
 
-## 五、分层(MVC)代码生成（增强中：设计说明）
+## 五、分层(MVC)代码生成（增强版：可直接落项目）
 
-### 1) 推荐分层结构
+> 详细“生成产物说明”（从大到小、每层包含哪些目录/文件/作用）见：`docs/生成产物说明.md`
 
-以 `RootNamespacePrefix.ProjectName` 为根（可配置），默认生成：
+### 1) 输出结构（与模板生成器风格对齐）
 
-- `Model`：实体（Entity）
-- `DAL`：仓储（Repository），封装 SqlSugar 操作
-- `BLL`：业务服务（Service）
-- `Common`：通用基础（DbContext、工具类、Enums、Result 等）
-- `WebApi`：控制器（Controller）/ API 入口（可选 Auth）
+以 `RootNamespacePrefix.ProjectName` 为根（可配置），默认会生成这些“项目目录”（注意：目录名就是命名空间）：
 
-### 2) 依赖倒置（DIP）与 SqlSugarScope 推荐
+- `{前缀}.{项目}.Model`
+- `{前缀}.{项目}.DAL`
+- `{前缀}.{项目}.BLL`
+- `{前缀}.{项目}.Common`
+- `{前缀}.{项目}.WebApi`
+
+### 2) Model 层（重点：generat/temp + 每表目录）
+
+Model 采用“生成与扩展分离”的结构，避免你改动生成文件被覆盖：
+
+- `generat/<表名>/Model<表名>.cs`：**表映射实体**（带 SugarTable/SugarColumn，字段严格对应数据库列）
+- `temp/<表名>/Model<表名>_partial.cs`：**扩展部分类**（导航/枚举/非表字段放这里，默认不映射）
+- `temp/<表名>/Model<表名>_search.cs`：**后台搜索类**（后台筛选/查询参数放这里）
+
+### 3) DAL/Common/BLL（DIP + SqlSugarScope）
 
 我们推荐使用 `SqlSugarScope` 并做依赖倒置：
 
@@ -142,7 +152,23 @@
 - 代码结构清晰、可测试、可替换
 - 多库/事务/读写分离更好扩展
 
-### 3) 基础 CRUD 能力（同步 + 异步）
+### 4) WebApi（统一返回体 + _base + 权限骨架）
+
+WebApi 默认会生成：
+
+- `_base`：基础控制器链（`BaseController` 等）
+- `_base/Results`：统一返回体 `SysResult/SysResultString/SysResult_layui_table`（替代 `Ok()`）
+- `_base/HelperPowers`：权限菜单 `PowerMenu_表名.cs`（每表一份）
+- `Services`：依赖注入注册扩展（`AddGeneratedServices()`）
+- `Controllers`：每表 Controller（默认输出 `get_page/do_add/do_edit/do_delete` 结构，后续按业务补齐查询条件/主键删除等）
+
+### 5) 为什么不用 `Ok()`？
+
+原工具使用统一返回体是为了：
+
+- 前端/调用方统一判断 `code/msg/data`
+- 方便扩展：分页、错误码、traceId、权限提示等
+- 避免 `Ok(object)` “只有 data 没有语义”的痛点
 
 增强版生成器会默认提供常用 CRUD 封装（DAL 层）：
 
@@ -197,4 +223,6 @@
   - 逻辑外键推断（`UserId` 规则）
   - 枚举备注解析（`(Enum:...)`）
   - 分层脚手架（Common/DAL 的 SqlSugarScope + Repository 封装）
+  - WebApi 统一返回体（SysResult*）+ `_base/Services/HelperPowers`
+  - Model 结构对齐（generat/temp + partial/search）
 

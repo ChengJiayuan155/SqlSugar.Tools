@@ -3,7 +3,8 @@
 <html lang="en" xmlns="http://www.w3.org/1999/xhtml">
 <head>
     <meta charset="utf-8" />
-    <title></title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>数据库迁移</title>
     <link href="../css/element-plus.css" rel="stylesheet" />
     <link href="../css/base.css" rel="stylesheet" />
     <link href="../css/CreateEntity.css" rel="stylesheet" />
@@ -62,6 +63,14 @@
                 <transition name="step">
                     <div v-if="dbType === 0" class="sqlserver" key="sqlserver">
                         <el-form ref="SQLServerForm" :model="SQLServerForm" label-width="100px" :rules="SQLServerFormRules">
+                            <el-form-item :label="activeIndex === 0 ? '已保存连接(源): ' : '已保存连接(目标): '">
+                                <el-select v-if="activeIndex === 0" v-model="savedConnYuan" placeholder="选择已保存连接（可直接下一步）" style="width:100%" filterable @change="applySavedConn('yuan', savedConnYuan)">
+                                    <el-option v-for="(item, index) in getSavedConnOptions('yuan')" :label="item.label" :value="item.label" :key="index"></el-option>
+                                </el-select>
+                                <el-select v-else v-model="savedConnMubiao" placeholder="选择已保存连接（可直接下一步）" style="width:100%" filterable @change="applySavedConn('mubiao', savedConnMubiao)">
+                                    <el-option v-for="(item, index) in getSavedConnOptions('mubiao')" :label="item.label" :value="item.label" :key="index"></el-option>
+                                </el-select>
+                            </el-form-item>
                             <el-form-item label="主机地址: " prop="host">
                                 <el-input v-model="SQLServerForm.host" placeholder="请输入主机地址"></el-input>
                             </el-form-item>
@@ -90,6 +99,14 @@
                     </div>
                     <div v-if="dbType === 1" class="mysql" key="mysql">
                         <el-form ref="MySqlForm" :model="MySqlForm" label-width="120px" :rules="MySqlFormRules">
+                            <el-form-item :label="activeIndex === 0 ? '已保存连接(源): ' : '已保存连接(目标): '">
+                                <el-select v-if="activeIndex === 0" v-model="savedConnYuan" placeholder="选择已保存连接（可直接下一步）" style="width:100%" filterable @change="applySavedConn('yuan', savedConnYuan)">
+                                    <el-option v-for="(item, index) in getSavedConnOptions('yuan')" :label="item.label" :value="item.label" :key="index"></el-option>
+                                </el-select>
+                                <el-select v-else v-model="savedConnMubiao" placeholder="选择已保存连接（可直接下一步）" style="width:100%" filterable @change="applySavedConn('mubiao', savedConnMubiao)">
+                                    <el-option v-for="(item, index) in getSavedConnOptions('mubiao')" :label="item.label" :value="item.label" :key="index"></el-option>
+                                </el-select>
+                            </el-form-item>
                             <el-form-item label="主机地址: " prop="host">
                                 <el-input v-model="MySqlForm.host" placeholder="请输入主机地址"></el-input>
                             </el-form-item>
@@ -115,6 +132,14 @@
                     </div>
                     <div v-if="dbType === 2" class="sqlite" key="sqlite">
                         <el-form ref="SQLiteForm" :model="SQLiteForm" label-width="100px" :rules="SQLiteFormRules">
+                            <el-form-item :label="activeIndex === 0 ? '已保存连接(源): ' : '已保存连接(目标): '">
+                                <el-select v-if="activeIndex === 0" v-model="savedConnYuan" placeholder="选择已保存连接（可直接下一步）" style="width:100%" filterable @change="applySavedConn('yuan', savedConnYuan)">
+                                    <el-option v-for="(item, index) in getSavedConnOptions('yuan')" :label="item.label" :value="item.label" :key="index"></el-option>
+                                </el-select>
+                                <el-select v-else v-model="savedConnMubiao" placeholder="选择已保存连接（可直接下一步）" style="width:100%" filterable @change="applySavedConn('mubiao', savedConnMubiao)">
+                                    <el-option v-for="(item, index) in getSavedConnOptions('mubiao')" :label="item.label" :value="item.label" :key="index"></el-option>
+                                </el-select>
+                            </el-form-item>
                             <el-form-item label="数据文件: " prop="host">
                                 <el-input v-model="SQLiteForm.host" placeholder="请输入DB文件地址或选择文件">
                                     <template #append>
@@ -133,6 +158,14 @@
                     </div>
                     <div v-if="dbType === 3" class="oracle" key="oracle">
                         <el-form ref="OracleForm" :model="OracleForm" label-width="140px" :rules="OracleFormRules">
+                            <el-form-item :label="activeIndex === 0 ? '已保存连接(源): ' : '已保存连接(目标): '">
+                                <el-select v-if="activeIndex === 0" v-model="savedConnYuan" placeholder="选择已保存连接（可直接下一步）" style="width:100%" filterable @change="applySavedConn('yuan', savedConnYuan)">
+                                    <el-option v-for="(item, index) in getSavedConnOptions('yuan')" :label="item.label" :value="item.label" :key="index"></el-option>
+                                </el-select>
+                                <el-select v-else v-model="savedConnMubiao" placeholder="选择已保存连接（可直接下一步）" style="width:100%" filterable @change="applySavedConn('mubiao', savedConnMubiao)">
+                                    <el-option v-for="(item, index) in getSavedConnOptions('mubiao')" :label="item.label" :value="item.label" :key="index"></el-option>
+                                </el-select>
+                            </el-form-item>
                             <el-form-item label="连接方式: ">
                                 <el-select v-model="OracleForm.linkType" placeholder="请选连接方式" style="width:100%">
                                     <el-option label="Basic" value="Basic"></el-option>
@@ -164,6 +197,14 @@
                     </div>
                     <div v-if="dbType === 4" class="postregsql" key="postregsql">
                         <el-form ref="PGSqlForm" :model="PGSqlForm" label-width="120px" :rules="PGSqlFormRules">
+                            <el-form-item :label="activeIndex === 0 ? '已保存连接(源): ' : '已保存连接(目标): '">
+                                <el-select v-if="activeIndex === 0" v-model="savedConnYuan" placeholder="选择已保存连接（可直接下一步）" style="width:100%" filterable @change="applySavedConn('yuan', savedConnYuan)">
+                                    <el-option v-for="(item, index) in getSavedConnOptions('yuan')" :label="item.label" :value="item.label" :key="index"></el-option>
+                                </el-select>
+                                <el-select v-else v-model="savedConnMubiao" placeholder="选择已保存连接（可直接下一步）" style="width:100%" filterable @change="applySavedConn('mubiao', savedConnMubiao)">
+                                    <el-option v-for="(item, index) in getSavedConnOptions('mubiao')" :label="item.label" :value="item.label" :key="index"></el-option>
+                                </el-select>
+                            </el-form-item>
                             <el-form-item label="主机地址: " prop="host">
                                 <el-input v-model="PGSqlForm.host" placeholder="请输入主机地址"></el-input>
                             </el-form-item>

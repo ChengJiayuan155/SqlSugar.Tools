@@ -1,6 +1,7 @@
 const sqlServerLinkInfoKey = "SQL_SERVER_LINK_INFO_KEY";
 const mySqlLinkInfoKey = "MY_SQL_LINK_INFO_KEY";
 const pgsqlLinkInfoKey = "PG_SQL_LINK_INFO_KEY";
+const dbDataKey = "dbDataKey";
 
 function setItem(key, value) {
     window.localStorage.setItem(key, value);
@@ -68,8 +69,11 @@ const app = createApp({
             activeIndex: 0,
             dbType: 0,
             dbName: ['SqlServer', 'MySQL', 'SQLite', 'Oracle', 'PostgreSQL'],
+            savedConnections: [],
+            savedConnYuan: '',
+            savedConnMubiao: '',
             SQLServerForm: {
-                host: '',
+                host: '127.0.0.1',
                 linkType: 'db',
                 account: '',
                 pwd: '',
@@ -91,7 +95,7 @@ const app = createApp({
                 ]
             },
             MySqlForm: {
-                host: '',
+                host: '127.0.0.1',
                 port: '3306',
                 account: '',
                 pwd: '',
@@ -121,7 +125,7 @@ const app = createApp({
                 ]
             },
             OracleForm: {
-                host: '',
+                host: '127.0.0.1',
                 port: '1521',
                 linkType: 'Basic',
                 account: '',
@@ -147,7 +151,7 @@ const app = createApp({
                 ]
             },
             PGSqlForm: {
-                host: '',
+                host: '127.0.0.1',
                 port: '5432',
                 account: '',
                 pwd: '',
@@ -212,6 +216,62 @@ const app = createApp({
         }
     },
     methods: {
+        getSavedConnOptions(forStep) {
+            // forStep: 'yuan' | 'mubiao'
+            const currentType = this.dbName[this.dbType];
+            const map = {
+                'SqlServer': 'sqlserver',
+                'MySQL': 'mysql',
+                'SQLite': 'sqlite',
+                'Oracle': 'oracle',
+                'PostgreSQL': 'pgsql'
+            };
+            const t = map[currentType] || '';
+            return (this.savedConnections || []).filter(x => (x.type || '').toLowerCase() === t);
+        },
+        applySavedConn(which, label) {
+            // which: 'yuan' | 'mubiao'
+            if (!label) return;
+            const list = this.getSavedConnOptions(which);
+            const conn = list.find(x => x.label === label);
+            if (!conn) return;
+
+            const currentType = this.dbName[this.dbType];
+            if (currentType === 'SqlServer') {
+                this.SQLServerForm.host = conn.host || this.SQLServerForm.host || '127.0.0.1';
+                this.SQLServerForm.linkType = conn.linkType || this.SQLServerForm.linkType || 'db';
+                this.SQLServerForm.account = conn.account || '';
+                this.SQLServerForm.pwd = conn.pwd || '';
+                this.SQLServerForm.db = conn.db || '';
+            } else if (currentType === 'MySQL') {
+                this.MySqlForm.host = conn.host || this.MySqlForm.host || '127.0.0.1';
+                this.MySqlForm.port = conn.port || this.MySqlForm.port || '3306';
+                this.MySqlForm.account = conn.account || '';
+                this.MySqlForm.pwd = conn.pwd || '';
+                this.MySqlForm.db = conn.db || '';
+            } else if (currentType === 'PostgreSQL') {
+                this.PGSqlForm.host = conn.host || this.PGSqlForm.host || '127.0.0.1';
+                this.PGSqlForm.port = conn.port || this.PGSqlForm.port || '5432';
+                this.PGSqlForm.account = conn.account || '';
+                this.PGSqlForm.pwd = conn.pwd || '';
+                this.PGSqlForm.db = conn.db || '';
+            } else if (currentType === 'Oracle') {
+                this.OracleForm.host = conn.host || this.OracleForm.host || '127.0.0.1';
+                this.OracleForm.port = conn.port || this.OracleForm.port || '1521';
+                this.OracleForm.linkType = conn.linkType || this.OracleForm.linkType || 'Basic';
+                this.OracleForm.account = conn.account || '';
+                this.OracleForm.pwd = conn.pwd || '';
+                this.OracleForm.SNSID = conn.SNSID || this.OracleForm.SNSID || 'ORCL';
+                this.OracleForm.radio = conn.radio || this.OracleForm.radio || 'Service';
+            } else if (currentType === 'SQLite') {
+                this.SQLiteForm.host = conn.host || '';
+                this.SQLiteForm.pwd = conn.pwd || '';
+            }
+
+            // 选择了已保存连接时，允许直接“下一步”（无需再点测试连接）
+            this.testIsSuccess = true;
+            this.dbList = [];
+        },
         tableRowClassName({ row, rowIndex }) {
             if (rowIndex % 2 === 1) {
                 return 'warning-row';
@@ -490,6 +550,15 @@ const app = createApp({
         }
     },
     created() {
+        const json = localStorage.getItem(dbDataKey);
+        if (json) {
+            try {
+                this.savedConnections = JSON.parse(json) || [];
+            } catch (e) {
+                this.savedConnections = [];
+            }
+        }
+
         const sqlServerLinkInfo = getItem(sqlServerLinkInfoKey);
         if (sqlServerLinkInfo) {
             this.SQLServerForm = JSON.parse(sqlServerLinkInfo);

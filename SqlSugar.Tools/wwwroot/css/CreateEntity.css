@@ -3,8 +3,19 @@
     src: url('fonts/MONACO.TTF') format('truetype');
 }
 html, body {
-    background: #2E3238;
+    background: #EFF1F4;
     margin: 0;
+}
+
+/* ---------- 浅色主题（统一可读性） ---------- */
+body {
+    --app-bg: #EFF1F4;
+    --app-panel: #FFFFFF;
+    --app-panel-2: #F6F8FA;
+    --app-text: #303133;
+    --app-subtext: #606266;
+    --app-border: rgba(0, 0, 0, 0.08);
+    --app-accent: #1883D7;
 }
 .dbTypeItem {
     transition:.6s;
@@ -17,7 +28,7 @@ html, body {
     height: 50px !important;
     line-height: 50px !important;
     border-bottom: 0 !important;
-    background: #272A2F !important
+    background: rgba(24, 131, 215, 0.10) !important;
 }
 .dbNav {
     position: fixed;
@@ -35,7 +46,8 @@ html, body {
     height: calc(100% - 25px) !important;
     font-size: 16px;
     overflow-x: scroll;
-    background: #292929
+    background: var(--app-panel);
+    border-left: 1px solid var(--app-border);
 }
 .w-e-text-container {
     height: calc(100% - 25px) !important;
@@ -44,7 +56,7 @@ html, body {
     display:none !important;
 }
 .w-e-text code {
-    background: #292929 !important
+    background: transparent !important;
 }
 .el-menu{
    border-right:none !important;
@@ -56,49 +68,101 @@ html, body {
     width: 15vw;
     min-width: 200px;
     white-space: unset;
-    overflow: hidden;
+    overflow: auto;
     display: inline-block;
     float: left;
-    background: #2E3238;
-    color:#fff;
+    background: var(--app-panel);
+    color: var(--app-text);
+    border-right: 1px solid var(--app-border);
+}
+
+.dbList-head{
+    position: sticky;
+    top: 0;
+    z-index: 4;
+    background: var(--app-panel);
+    border-bottom: 1px solid var(--app-border);
+    padding: 8px 8px 6px 8px;
+}
+
+.dbList-head .search.el-input{
+    width: 100%;
+}
+
+.dbList-actions{
+    display:flex;
+    gap:6px;
+    flex-wrap:wrap;
+    padding-top:8px;
+}
+
+.dbItem {
+    width: 100%;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.dbItem > span:last-child {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.dbItem .node-text {
+    display: inline-block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.dbList .el-tree {
+    background: var(--app-panel);
+    color: var(--app-text);
+}
+.dbList .el-tree-node__content {
+    color: var(--app-text);
+}
+.dbList .el-tree-node__expand-icon {
+    color: rgba(0, 0, 0, 0.45);
 }
 .el-tree-node__content:hover {
-    background: #272A2F !important;
+    background: rgba(24, 131, 215, 0.06) !important;
 }
 .el-tree-node:focus > .el-tree-node__content {
-    background-color: #272A2F !important;
+    background-color: rgba(24, 131, 215, 0.10) !important;
 }
 .el-tree-node__content {
     height: 40px;
 }
 .is-current {
-    background: #272A2F !important;
-    color: #42CAC7 !important;
+    background: rgba(24, 131, 215, 0.10) !important;
+    color: var(--app-text) !important;
 }
 /* Element UI 旧写法 .search > input 在 Element Plus 2 中失效：输入框在 .el-input__wrapper 内 */
 .dbList .search.el-input {
-    --el-input-bg-color: #272A2F;
-    --el-input-text-color: #42CAC7;
-    --el-input-border-color: #1883D7;
-    --el-input-hover-border-color: #42CAC7;
-    --el-input-focus-border-color: #42CAC7;
+    --el-input-bg-color: var(--app-panel-2);
+    --el-input-text-color: var(--app-text);
+    --el-input-border-color: rgba(0,0,0,0.10);
+    --el-input-hover-border-color: rgba(24, 131, 215, 0.55);
+    --el-input-focus-border-color: var(--app-accent);
 }
 .dbList .search.el-input .el-input__wrapper {
-    background-color: #272A2F !important;
-    border-radius: 0 !important;
+    background-color: var(--app-panel-2) !important;
+    border-radius: 8px !important;
     box-shadow: none !important;
-    border-bottom: 1px solid #1883D7 !important;
+    border: 1px solid rgba(0,0,0,0.10) !important;
 }
 .dbList .search.el-input .el-input__inner {
-    color: #42CAC7 !important;
+    color: var(--app-text) !important;
 }
 .dbList .search.el-input .el-input__inner::placeholder {
-    color: rgba(255, 255, 255, 0.38);
+    color: rgba(0, 0, 0, 0.35);
 }
 .dbList .search.el-input .el-input__wrapper.is-focus {
     box-shadow: none !important;
-    border-bottom-color: #42CAC7 !important;
+    border-color: var(--app-accent) !important;
 }
 .el-tree__empty-text {
-    color: rgba(255, 255, 255, 0.45);
+    color: rgba(0, 0, 0, 0.45);
 }
