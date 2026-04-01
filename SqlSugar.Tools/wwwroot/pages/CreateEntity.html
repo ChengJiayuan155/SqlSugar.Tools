@@ -248,6 +248,11 @@
                     <el-checkbox v-model="layerForm.generateWebApiExtensions">生成 Extensions 模块</el-checkbox>
                     <el-checkbox v-model="layerForm.generateWebApiProgramSkeleton">生成 Program.cs 示例</el-checkbox>
                 </el-form-item>
+                <el-form-item label="后台管理架构: ">
+                    <el-checkbox v-model="layerForm.generateAdminManagement">生成后台管理系统（Razor Pages）</el-checkbox>
+                    <el-checkbox v-model="layerForm.generateAdminApi">生成后台专用API（WebApi.Admin）</el-checkbox>
+                    <el-checkbox v-model="layerForm.generateWebHost">生成唯一入口宿主（Web）</el-checkbox>
+                </el-form-item>
                 <el-form-item label="常用模块(可选): ">
                     <el-checkbox v-model="layerForm.enableSwagger">Swagger</el-checkbox>
                     <el-checkbox v-model="layerForm.enableCors">CORS</el-checkbox>

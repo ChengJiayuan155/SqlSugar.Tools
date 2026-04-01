@@ -31,12 +31,17 @@ namespace SqlSugar.Tools.CodeGen
         public bool EnablePaging { get; set; } = true;
         public bool EnableNLog { get; set; } = true;
         public bool GenerateNLogConfig { get; set; } = true;
+        public bool GenerateAdminManagement { get; set; } = false;
+        public bool GenerateAdminApi { get; set; } = false;
+        public bool GenerateWebHost { get; set; } = false;
 
         public string ModelNamespace => $"{RootNamespacePrefix}.{ProjectName}.Model";
         public string DalNamespace => $"{RootNamespacePrefix}.{ProjectName}.DAL";
         public string BllNamespace => $"{RootNamespacePrefix}.{ProjectName}.BLL";
         public string CommonNamespace => $"{RootNamespacePrefix}.{ProjectName}.Common";
         public string WebApiNamespace => $"{RootNamespacePrefix}.{ProjectName}.WebApi";
+        public string WebApiAdminNamespace => $"{RootNamespacePrefix}.{ProjectName}.WebApi.Admin";
+        public string WebHostNamespace => $"{RootNamespacePrefix}.{ProjectName}.Web";
 
         public string NormalizeName(string s)
         {

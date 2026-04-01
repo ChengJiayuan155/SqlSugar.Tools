@@ -192,6 +192,8 @@ namespace {ns}
             var bllNs = opt.BllNamespace;
             var modelNs = opt.ModelNamespace;
             var modelTypeName = $"Model{entityName}";
+            var bllVar = char.ToLowerInvariant(entityName[0]) + entityName.Substring(1) + "Bll";
+            var bllField = "_" + bllVar;
             return $@"using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
@@ -209,18 +211,18 @@ namespace {ns}.Controllers
     [Route(""api/[controller]"")]
     public class {entityName}Controller : BaseController
     {{
-        private readonly Bll{entityName} _bll;
+        private readonly Bll{entityName} {bllField};
 
-        public {entityName}Controller(Bll{entityName} bll)
+        public {entityName}Controller(Bll{entityName} {bllVar})
         {{
-            _bll = bll;
+            {bllField} = {bllVar};
         }}
 
         [HttpPost]
         [HasPower(PowerAction.查看列表)]
         public SysResult_layui_table get_page([FromForm] {modelTypeName}_search param, [FromForm] formparam_PagerInfo_LayUI pager)
         {{
-            var pageResult = _bll.GetPage(param, pager.page, pager.limit);
+            var pageResult = {bllField}.GetPage(param, pager.page, pager.limit);
             return SysResult.Return_layui(pageResult);
         }}
 
@@ -228,7 +230,7 @@ namespace {ns}.Controllers
         [HasPower(PowerAction.添加)]
         public SysResultString do_add([FromBody] {modelTypeName} param)
         {{
-            var row = _bll.Add(param);
+            var row = {bllField}.Add(param);
             return row > 0 ? SuccessString(""添加成功"") : ErrorString(""添加失败"");
         }}
 
@@ -236,7 +238,7 @@ namespace {ns}.Controllers
         [HasPower(PowerAction.编辑)]
         public SysResultString do_edit([FromBody] {modelTypeName} param)
         {{
-            var row = _bll.Update(param);
+            var row = {bllField}.Update(param);
             return row > 0 ? SuccessString(""编辑成功"") : ErrorString(""编辑失败"");
         }}
 

@@ -129,6 +129,9 @@ const app = createApp({
                 enablePaging: true,
                 enableNLog: true,
                 generateNLogConfig: true,
+                generateAdminManagement: false,
+                generateAdminApi: false,
+                generateWebHost: false,
                 outputPath: '',
                 templateKey: 'default'
             },

@@ -1382,8 +1382,17 @@ namespace SqlSugar.Tools
                 EnablePaging = !layer.ContainsKey("enablePaging") || Convert.ToBoolean(layer["enablePaging"]),
                 EnableNLog = !layer.ContainsKey("enableNLog") || Convert.ToBoolean(layer["enableNLog"]),
                 GenerateNLogConfig = !layer.ContainsKey("generateNLogConfig") || Convert.ToBoolean(layer["generateNLogConfig"]),
+                GenerateAdminManagement = layer.ContainsKey("generateAdminManagement") && Convert.ToBoolean(layer["generateAdminManagement"]),
+                GenerateAdminApi = layer.ContainsKey("generateAdminApi") && Convert.ToBoolean(layer["generateAdminApi"]),
+                GenerateWebHost = layer.ContainsKey("generateWebHost") && Convert.ToBoolean(layer["generateWebHost"]),
                 GenerateAuth = false
             };
+            if (opt.GenerateAdminManagement)
+            {
+                // 选择“后台管理系统”时，默认启用后台API与宿主Web
+                opt.GenerateAdminApi = true;
+                opt.GenerateWebHost = true;
+            }
 
             var outputBase = (opt.OutputPath ?? string.Empty).Trim();
             if (string.IsNullOrWhiteSpace(outputBase))
@@ -1460,9 +1469,11 @@ namespace {opt.ModelNamespace}
                         }
                         filesCount++;
 
-                        // search（后台搜索类）
-                        var searchPath = Path.Combine(modelTempRoot, entityName, $"{modelClassName}_search.cs");
-                        var searchContent =
+                        // search（后台搜索类）：仅在需要后台管理系统时生成
+                        if (opt.GenerateAdminManagement)
+                        {
+                            var searchPath = Path.Combine(modelTempRoot, entityName, $"{modelClassName}_search.cs");
+                            var searchContent =
 $@"using System;
 
 namespace {opt.ModelNamespace}
@@ -1472,11 +1483,12 @@ namespace {opt.ModelNamespace}
     {{
     }}
 }}";
-                        using (var sw = new StreamWriter(searchPath, false, Encoding.UTF8))
-                        {
-                            await sw.WriteAsync(searchContent);
+                            using (var sw = new StreamWriter(searchPath, false, Encoding.UTF8))
+                            {
+                                await sw.WriteAsync(searchContent);
+                            }
+                            filesCount++;
                         }
-                        filesCount++;
                     }
                 }
 
@@ -1508,6 +1520,14 @@ namespace {opt.ModelNamespace}
                     else if (rel.StartsWith("WebApi\\"))
                     {
                         full = Path.Combine(projectRoot, opt.WebApiNamespace, rel.Substring("WebApi\\".Length));
+                    }
+                    else if (rel.StartsWith("WebApi.Admin\\"))
+                    {
+                        full = Path.Combine(projectRoot, opt.WebApiAdminNamespace, rel.Substring("WebApi.Admin\\".Length));
+                    }
+                    else if (rel.StartsWith("Web\\"))
+                    {
+                        full = Path.Combine(projectRoot, opt.WebHostNamespace, rel.Substring("Web\\".Length));
                     }
                     else
                     {
@@ -2271,6 +2291,396 @@ app.Run();
 }}"
                     });
                 }
+            }
+
+            if (opt.GenerateAdminApi)
+            {
+                foreach (var n in entityNames ?? new List<string>())
+                {
+                    var adminBllVar = char.ToLowerInvariant(n[0]) + n.Substring(1) + "Bll";
+                    var adminBllField = "_" + adminBllVar;
+                    files.Add(new GeneratedFile
+                    {
+                        RelativePath = $"WebApi.Admin/Controllers/{n}AdminController.cs",
+                        Content = $@"using Microsoft.AspNetCore.Mvc;
+using {opt.BllNamespace};
+using {opt.ModelNamespace};
+using {opt.WebApiNamespace}._base.Results;
+
+namespace {opt.WebApiAdminNamespace}.Controllers
+{{
+    /// <summary>
+    /// 后台管理接口控制器：{n}
+    /// 仅供后台管理系统（Razor Pages / Admin UI）调用。
+    /// </summary>
+    [ApiController]
+    [Route(""api/admin/{n}"")]
+    public class {n}AdminController : ControllerBase
+    {{
+        private readonly Bll{n} {adminBllField};
+
+        /// <summary>
+        /// 构造函数。
+        /// </summary>
+        /// <param name=""{adminBllVar}"">业务层实例</param>
+        public {n}AdminController(Bll{n} {adminBllVar})
+        {{
+            {adminBllField} = {adminBllVar};
+        }}
+
+        /// <summary>
+        /// 分页查询。
+        /// </summary>
+        [HttpPost(""get_page"")]
+        public SysResult_layui_table GetPage([FromForm] Model{n}_search param, [FromForm] formparam_PagerInfo_LayUI pager)
+        {{
+            var pageResult = {adminBllField}.GetPage(param, pager.page, pager.limit);
+            return SysResult.Return_layui(pageResult);
+        }}
+
+        /// <summary>
+        /// 新增。
+        /// </summary>
+        [HttpPost(""do_add"")]
+        public SysResultString DoAdd([FromBody] Model{n} param)
+        {{
+            var row = {adminBllField}.Add(param);
+            return row > 0 ? SysResult.SuccessString(""添加成功"") : SysResult.ErrorString(""添加失败"");
+        }}
+
+        /// <summary>
+        /// 编辑。
+        /// </summary>
+        [HttpPost(""do_edit"")]
+        public SysResultString DoEdit([FromBody] Model{n} param)
+        {{
+            var row = {adminBllField}.Update(param);
+            return row > 0 ? SysResult.SuccessString(""编辑成功"") : SysResult.ErrorString(""编辑失败"");
+        }}
+    }}
+}}"
+                    });
+                }
+            }
+
+            if (opt.GenerateWebHost)
+            {
+                var firstEntity = (entityNames != null && entityNames.Count > 0) ? entityNames[0] : string.Empty;
+                var adminPartLine = !string.IsNullOrWhiteSpace(firstEntity)
+                    ? $".AddApplicationPart(typeof({opt.WebApiAdminNamespace}.Controllers.{firstEntity}AdminController).Assembly)"
+                    : string.Empty;
+
+                files.Add(new GeneratedFile
+                {
+                    RelativePath = "Web/Program.sample.cs",
+                    Content = $@"using Microsoft.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.Mvc.ApplicationParts;
+using {opt.WebApiNamespace}.Extensions;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// 1) 注册应用服务（日志/鉴权/CORS/Swagger/生成层依赖）
+builder.Services.AddAppServices(builder.Configuration, builder.Environment);
+
+// 2) 聚合控制器：加载 WebApi 与 WebApi.Admin 两个类库中的 Controller
+builder.Services.AddControllers()
+    .AddApplicationPart(typeof({opt.WebApiNamespace}.Extensions.AppHostExtensions).Assembly){adminPartLine};
+
+builder.Services.AddRazorPages();
+
+var app = builder.Build();
+
+// 3) 请求管道
+app.UseAppPipeline();
+app.MapRazorPages();
+
+app.Run();
+"
+                });
+
+                files.Add(new GeneratedFile
+                {
+                    RelativePath = "Web/Pages/_ViewImports.cshtml",
+                    Content = @"@using Microsoft.AspNetCore.Mvc
+@using Microsoft.AspNetCore.Mvc.RazorPages
+"
+                });
+
+                files.Add(new GeneratedFile
+                {
+                    RelativePath = "Web/Pages/_ViewStart.cshtml",
+                    Content = @"@{
+    Layout = ""_Shared/_Layout"";
+}
+"
+                });
+
+                files.Add(new GeneratedFile
+                {
+                    RelativePath = "Web/Pages/_Shared/_Layout.cshtml",
+                    Content = $@"<!DOCTYPE html>
+<html lang=""zh-CN"">
+<head>
+    <meta charset=""utf-8"" />
+    <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"" />
+    <title>@ViewData[""Title""] - {opt.WebHostNamespace}</title>
+    <style>
+        body {{ font-family: Segoe UI, Arial, sans-serif; margin:0; background:#f5f7fa; color:#222; }}
+        .top {{ background:#111827; color:#fff; padding:12px 16px; }}
+        .top a {{ color:#93c5fd; margin-right:12px; text-decoration:none; }}
+        .container {{ padding:16px; }}
+        .card {{ background:#fff; border:1px solid #e5e7eb; border-radius:8px; padding:16px; }}
+        .muted {{ color:#6b7280; font-size:12px; }}
+    </style>
+</head>
+<body>
+    <div class=""top"">
+        <strong>{opt.WebHostNamespace}</strong>
+        <a href=""/"">首页</a>
+        <a href=""/admin"">后台</a>
+    </div>
+    <div class=""container"">
+        @RenderBody()
+    </div>
+</body>
+</html>
+"
+                });
+
+                files.Add(new GeneratedFile
+                {
+                    RelativePath = "Web/Pages/Index.cshtml",
+                    Content = @"@page
+@model IndexModel
+@{
+    ViewData[""Title""] = ""首页"";
+}
+<div class=""card"">
+    <h2>系统首页</h2>
+    <p>该页面为生成的宿主页占位首页，可按业务替换。</p>
+    <p class=""muted"">可访问 /admin 查看后台列表入口。</p>
+</div>
+"
+                });
+
+                files.Add(new GeneratedFile
+                {
+                    RelativePath = "Web/Pages/Index.cshtml.cs",
+                    Content = $@"using Microsoft.AspNetCore.Mvc.RazorPages;
+
+namespace {opt.WebHostNamespace}.Pages
+{{
+    /// <summary>
+    /// 首页 PageModel。
+    /// </summary>
+    public class IndexModel : PageModel
+    {{
+        public void OnGet() {{ }}
+    }}
+}}
+"
+                });
+
+                files.Add(new GeneratedFile
+                {
+                    RelativePath = "Web/Pages/Error.cshtml",
+                    Content = @"@page
+@model ErrorModel
+@{
+    ViewData[""Title""] = ""错误"";
+}
+<div class=""card"">
+    <h2>页面不存在或发生错误</h2>
+    <p class=""muted"">请检查地址或联系管理员。</p>
+</div>
+"
+                });
+
+                files.Add(new GeneratedFile
+                {
+                    RelativePath = "Web/Pages/Error.cshtml.cs",
+                    Content = $@"using Microsoft.AspNetCore.Mvc.RazorPages;
+
+namespace {opt.WebHostNamespace}.Pages
+{{
+    /// <summary>
+    /// 错误页 PageModel。
+    /// </summary>
+    public class ErrorModel : PageModel
+    {{
+        public void OnGet() {{ }}
+    }}
+}}
+"
+                });
+
+                files.Add(new GeneratedFile
+                {
+                    RelativePath = "Web/Pages/admin/Index.cshtml",
+                    Content = @"@page ""/admin""
+@model AdminIndexModel
+@{
+    ViewData[""Title""] = ""后台管理首页"";
+}
+<div class=""card"">
+    <h2>后台管理</h2>
+    <p>以下为按表生成的后台页面入口：</p>
+    <ul>
+@foreach (var x in Model.TableNames)
+{
+    <li><a href=""/admin/@x"">@x</a></li>
+}
+    </ul>
+</div>
+"
+                });
+
+                files.Add(new GeneratedFile
+                {
+                    RelativePath = "Web/Pages/admin/Index.cshtml.cs",
+                    Content = $@"using Microsoft.AspNetCore.Mvc.RazorPages;
+using System.Collections.Generic;
+
+namespace {opt.WebHostNamespace}.Pages.admin
+{{
+    /// <summary>
+    /// 后台首页 PageModel。
+    /// </summary>
+    public class AdminIndexModel : PageModel
+    {{
+        public List<string> TableNames {{ get; }} = new List<string>
+        {{
+{string.Join("," + Environment.NewLine, (entityNames ?? new List<string>()).Select(x => $"            \"{x}\""))}
+        }};
+
+        public void OnGet() {{ }}
+    }}
+}}
+"
+                });
+
+                foreach (var n in entityNames ?? new List<string>())
+                {
+                    files.Add(new GeneratedFile
+                    {
+                        RelativePath = $"Web/Pages/admin/{n}/Index.cshtml",
+                        Content = $@"@page ""/admin/{n}""
+@model {opt.WebHostNamespace}.Pages.admin.{n}.IndexModel
+@{{
+    ViewData[""Title""] = ""后台列表 - {n}"";
+}}
+<div class=""card"">
+    <h2>{n} 列表</h2>
+    <p class=""muted"">最小模板页（可运行），数据来自后台 API：/api/admin/{n}/get_page</p>
+    <button onclick=""loadData()"">加载数据</button>
+    <a href=""/admin/{n}/edit?type=add"">新增</a>
+    <pre id=""data"" style=""margin-top:12px;background:#111827;color:#e5e7eb;padding:12px;border-radius:6px;overflow:auto;max-height:420px""></pre>
+</div>
+<script>
+async function loadData(){{
+    const fd = new FormData();
+    fd.append('page','1');
+    fd.append('limit','20');
+    const r = await fetch('/api/admin/{n}/get_page', {{ method:'POST', body: fd }});
+    const j = await r.json();
+    document.getElementById('data').textContent = JSON.stringify(j, null, 2);
+}}
+</script>
+"
+                    });
+
+                    files.Add(new GeneratedFile
+                    {
+                        RelativePath = $"Web/Pages/admin/{n}/Index.cshtml.cs",
+                        Content = $@"using Microsoft.AspNetCore.Mvc.RazorPages;
+
+namespace {opt.WebHostNamespace}.Pages.admin.{n}
+{{
+    /// <summary>
+    /// 后台列表页 PageModel：{n}
+    /// </summary>
+    public class IndexModel : PageModel
+    {{
+        public void OnGet() {{ }}
+    }}
+}}
+"
+                    });
+
+                    files.Add(new GeneratedFile
+                    {
+                        RelativePath = $"Web/Pages/admin/{n}/Edit.cshtml",
+                        Content = $@"@page ""/admin/{n}/edit""
+@model {opt.WebHostNamespace}.Pages.admin.{n}.EditModel
+@{{
+    ViewData[""Title""] = ""后台编辑 - {n}"";
+}}
+<div class=""card"">
+    <h2>{n} 编辑</h2>
+    <p class=""muted"">最小模板页（可运行），默认提交到后台 API：/api/admin/{n}/do_add 或 /api/admin/{n}/do_edit</p>
+    <label>JSON（请按实体字段填写）</label><br/>
+    <textarea id=""json"" style=""width:100%;height:220px"">{{}}</textarea><br/>
+    <button onclick=""submitData()"">提交</button>
+    <pre id=""result"" style=""margin-top:12px;background:#111827;color:#e5e7eb;padding:12px;border-radius:6px;overflow:auto;max-height:320px""></pre>
+</div>
+<script>
+function getType(){{
+   const p = new URLSearchParams(location.search);
+   return (p.get('type') || 'add').toLowerCase();
+}}
+async function submitData(){{
+    const t = getType();
+    const url = t === 'edit' ? '/api/admin/{n}/do_edit' : '/api/admin/{n}/do_add';
+    let payload = {{}};
+    try {{ payload = JSON.parse(document.getElementById('json').value || '{{}}'); }} catch(e) {{
+      alert('JSON格式错误');
+      return;
+    }}
+    const r = await fetch(url, {{
+      method:'POST',
+      headers:{{'Content-Type':'application/json'}},
+      body: JSON.stringify(payload)
+    }});
+    const j = await r.json();
+    document.getElementById('result').textContent = JSON.stringify(j, null, 2);
+}}
+</script>
+"
+                    });
+
+                    files.Add(new GeneratedFile
+                    {
+                        RelativePath = $"Web/Pages/admin/{n}/Edit.cshtml.cs",
+                        Content = $@"using Microsoft.AspNetCore.Mvc.RazorPages;
+
+namespace {opt.WebHostNamespace}.Pages.admin.{n}
+{{
+    /// <summary>
+    /// 后台编辑页 PageModel：{n}
+    /// </summary>
+    public class EditModel : PageModel
+    {{
+        public void OnGet() {{ }}
+    }}
+}}
+"
+                    });
+                }
+
+                files.Add(new GeneratedFile
+                {
+                    RelativePath = "Web/Pages/admin/_README.md",
+                    Content = @"# Admin Pages 占位目录
+
+该目录用于放置后台管理系统（Razor Pages）的 .cshtml 页面。
+当前生成器先提供后端 API 与宿主聚合骨架，你可按业务逐步补齐：
+
+- Pages/admin/<表名>/Index.cshtml
+- Pages/admin/<表名>/Edit.cshtml
+
+对应 API 路由前缀：`api/admin/*`
+"
+                });
             }
 
             return files;
