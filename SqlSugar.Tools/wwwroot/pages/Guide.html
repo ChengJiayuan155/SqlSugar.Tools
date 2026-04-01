@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns="http://www.w3.org/1999/xhtml" style="background:#2E3238">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>使用教程</title>
+    <link href="../css/element-plus.css" rel="stylesheet" />
+    <link href="../css/base.css" rel="stylesheet" />
+    <link href="../css/element-plus-app.css" rel="stylesheet" />
+    <style>
+        html, body { background:#2E3238; margin:0; }
+        .guide-wrap { padding: 18px 18px 24px 58px; color:#E6E6E6; }
+        .guide-title { margin: 8px 0 12px; font-size: 20px; font-weight: 700; letter-spacing: .5px; }
+        .guide-sub { margin: 0 0 16px; color: rgba(230,230,230,.72); font-size: 13px; line-height: 1.6; }
+        .guide-card { background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); border-radius: 12px; padding: 14px; }
+        .guide-card h3 { margin: 8px 0 10px; font-size: 14px; color: rgba(255,255,255,.9); }
+        .guide-card p, .guide-card li { font-size: 13px; line-height: 1.8; color: rgba(255,255,255,.82); }
+        .guide-card code { background: rgba(0,0,0,.25); padding: 2px 6px; border-radius: 6px; border: 1px solid rgba(255,255,255,.08); }
+        .guide-card pre { background: rgba(0,0,0,.28); padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,.08); overflow:auto; }
+        .guide-card pre code { border: none; background: transparent; padding: 0; }
+        .muted { color: rgba(230,230,230,.65); }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div id="tool">
+            <el-tooltip class="item" effect="dark" content="返回首页" placement="right">
+                <el-button onclick="toHome()" style="top:10px" class="tool-btn tool-btn-icon" circle size="small">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                        <path d="M15 18l-6-6 6-6" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                </el-button>
+            </el-tooltip>
+        </div>
+
+        <div class="guide-wrap">
+            <div class="guide-title">SqlSugar.Tools 使用教程（分层生成说明）</div>
+            <div class="guide-sub">
+                这里是工具内置说明，包含连接数据库、命名规范、注释/枚举/导航规则，以及分层(MVC)生成设计理念。
+                <span class="muted">（更详细版本请查看仓库根目录 README.md）</span>
+            </div>
+
+            <el-collapse v-model="activeNames">
+                <el-collapse-item name="quick" title="快速开始：从连接数据库到生成实体">
+                    <div class="guide-card">
+                        <ol>
+                            <li>首页点击 <code>实体类生成</code></li>
+                            <li>选择数据库类型并添加连接，点击 <code>测试连接</code>，然后 <code>确定</code></li>
+                            <li>左侧加载表，点击表即可预览右侧代码</li>
+                            <li>支持保存单表/保存全部表到目录</li>
+                        </ol>
+                    </div>
+                </el-collapse-item>
+
+                <el-collapse-item name="mapping" title="模型映射规范（强制推荐）">
+                    <div class="guide-card">
+                        <h3>类上</h3>
+                        <p>会生成 <code>[SugarTable(\"表名\", TableDescription=\"表中文注释\")]</code></p>
+                        <h3>字段上</h3>
+                        <p>会生成 <code>[SugarColumn(ColumnDescription=\"列中文注释\", IsPrimaryKey/IsIdentity/IsNullable...)]</code></p>
+                        <p class="muted">非表字段/导航字段请使用 <code>[SugarColumn(IsIgnore=true)]</code>（增强版会自动生成）。</p>
+                    </div>
+                </el-collapse-item>
+
+                <el-collapse-item name="fk" title="外键/导航命名规则（现代规范）">
+                    <div class="guide-card">
+                        <p>推荐外键字段命名：<code>主表名 + Id</code>，例如 <code>UserId</code> / <code>RoleId</code>。</p>
+                        <p>识别优先级：真实 FK（数据库约束）＞ 逻辑外键（UserId 推断）＞ 兼容旧规则（可选）。</p>
+                    </div>
+                </el-collapse-item>
+
+                <el-collapse-item name="enum" title="枚举生成规则（备注标记）">
+                    <div class="guide-card">
+                        <p>在列备注里写：</p>
+                        <pre><code>(Enum:0=禁用,1=启用)</code></pre>
+                        <p>即可稳定解析并生成对应枚举（增强中）。</p>
+                    </div>
+                </el-collapse-item>
+
+                <el-collapse-item name="layer" title="分层(MVC)生成原理（增强中）">
+                    <div class="guide-card">
+                        <p>建议分层：<code>Model</code> / <code>DAL</code> / <code>BLL</code> / <code>Common</code> / <code>WebApi</code>（可选 Auth）。</p>
+                        <p>推荐使用 <code>SqlSugarScope</code> 并做依赖倒置（上层依赖接口，下层实现封装 CRUD，同步+异步）。</p>
+                    </div>
+                </el-collapse-item>
+            </el-collapse>
+        </div>
+    </div>
+</body>
+</html>
+<script src="../js/vue3.global.prod.js"></script>
+<script src="../js/element-plus.full.min.js"></script>
+<script src="../js/Guide.js"></script>
+

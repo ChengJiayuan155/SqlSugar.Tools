@@ -58,6 +58,14 @@ namespace SqlSugar.Tools
                 });
             };
 
+            GlobalObject.AddFunction("showGuide").Execute += (func, args) =>
+            {
+                this.RequireUIThread(() =>
+                {
+                    Guide.ShowWindow();
+                });
+            };
+
             base.LoadHandler.OnLoadStart += LoadHandler_OnLoadStart;
         }
 

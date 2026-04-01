@@ -1,4 +1,4 @@
-﻿using Chromium.Event;
+using Chromium.Event;
 using MySql.Data.MySqlClient;
 using NetDimension.NanUI;
 using Newtonsoft.Json;
@@ -83,6 +83,7 @@ namespace SqlSugar.Tools
                 DBMove._DBMove = new DBMove();
             }
             DBMove._DBMove.Show();
+            DBMove._DBMove.WindowState = FormWindowState.Maximized;
             DBMove._DBMove.Focus();
         }
 

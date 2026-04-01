@@ -147,3 +147,13 @@ app.config.globalProperties.$confirm = ElementPlus.ElMessageBox.confirm;
 app.config.globalProperties.$prompt = ElementPlus.ElMessageBox.prompt;
 
 app.mount('#app');
+
+// 首页入口：打开内置使用教程页（通过 NanUI bridge 的 showGuide）
+function openGuide() {
+    try {
+        // NanUI 会把 C# 注册的方法挂到全局作用域
+        if (typeof showGuide === 'function') {
+            showGuide();
+        }
+    } catch (e) { }
+}

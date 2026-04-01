@@ -1,4 +1,4 @@
-﻿using Chromium.Event;
+using Chromium.Event;
 using NetDimension.NanUI;
 using Newtonsoft.Json;
 using SqlSugar.Tools.Model;
@@ -1190,6 +1190,7 @@ namespace SqlSugar.Tools
                 CreateEntity._CreateEntity = new CreateEntity();
             }
             CreateEntity._CreateEntity.Show();
+            CreateEntity._CreateEntity.WindowState = FormWindowState.Maximized;
             CreateEntity._CreateEntity.Focus();
         }
 
@@ -1531,6 +1532,7 @@ namespace {settings.EntityNamespace.Trim()}
     /// <summary>
     /// {nodeDesc}
     /// </summary>{(string.IsNullOrWhiteSpace(settings.CusAttr) ? "" : $"{Environment.NewLine}    {settings.CusAttr.Trim()}")}
+    [SugarTable(""{nodeName}"", TableDescription = ""{nodeDesc?.Replace("\"", "\\\"")}"")]
     public class {tableName}{(string.IsNullOrWhiteSpace(settings.BaseClassName) ? "" : $" : {settings.BaseClassName.Trim()}")}
     {{
         /// <summary>
@@ -1552,89 +1554,33 @@ namespace {settings.EntityNamespace.Trim()}
                     }
                     if ((bool)dr[isKeyName] && !(bool)dr[isIdentityName])
                     {
-                        if (settings.SqlSugarPK)
-                        {
-                            codeString.Append($@"
+                        codeString.Append($@"
         /// <summary>
         /// -zhuShi-
         /// </summary>
-        [SugarColumn(IsPrimaryKey = true)]
+        [SugarColumn(ColumnDescription = ""-zhuShiAttr-"", IsPrimaryKey = true, IsNullable = -isNullable-)]
         public -dbType- -colName- {{ get; set; }}
 ");
-                        }
-                        else
-                        {
-                            codeString.Append($@"
-        /// <summary>
-        /// -zhuShi-
-        /// </summary>
-        public -dbType- -colName- {{ get; set; }}
-");
-                        }
                     }
                     else if ((bool)dr[isKeyName] && (bool)dr[isIdentityName])
                     {
-                        if (settings.SqlSugarPK && settings.SqlSugarBZL)
-                        {
-                            codeString.Append($@"
+                        codeString.Append($@"
         /// <summary>
         /// -zhuShi-
         /// </summary>
-        [SugarColumn(IsPrimaryKey = true, IsIdentity = true)]
+        [SugarColumn(ColumnDescription = ""-zhuShiAttr-"", IsPrimaryKey = true, IsIdentity = true, IsNullable = -isNullable-)]
         public -dbType- -colName- {{ get; set; }}
 ");
-                        }
-                        else if (settings.SqlSugarPK && !settings.SqlSugarBZL)
-                        {
-                            codeString.Append($@"
-        /// <summary>
-        /// -zhuShi-
-        /// </summary>
-        [SugarColumn(IsPrimaryKey = true)]
-        public -dbType- -colName- {{ get; set; }}
-");
-                        }
-                        else if (!settings.SqlSugarPK && settings.SqlSugarBZL)
-                        {
-                            codeString.Append($@"
-        /// <summary>
-        /// -zhuShi-
-        /// </summary>
-        [SugarColumn(IsIdentity = true)]
-        public -dbType- -colName- {{ get; set; }}
-");
-                        }
-                        else
-                        {
-                            codeString.Append($@"
-        /// <summary>
-        /// -zhuShi-
-        /// </summary>
-        public -dbType- -colName- {{ get; set; }}
-");
-                        }
                     }
                     else if (!(bool)dr[isKeyName] && (bool)dr[isIdentityName])
                     {
-                        if (settings.SqlSugarBZL)
-                        {
-                            codeString.Append($@"
+                        codeString.Append($@"
         /// <summary>
         /// -zhuShi-
         /// </summary>
-        [SugarColumn(IsIdentity = true)]
+        [SugarColumn(ColumnDescription = ""-zhuShiAttr-"", IsIdentity = true, IsNullable = -isNullable-)]
         public -dbType- -colName- {{ get; set; }}
 ");
-                        }
-                        else
-                        {
-                            codeString.Append($@"
-        /// <summary>
-        /// -zhuShi-
-        /// </summary>
-        public -dbType- -colName- {{ get; set; }}
-");
-                        }
                     }
                     else
                     {
@@ -1642,10 +1588,12 @@ namespace {settings.EntityNamespace.Trim()}
         /// <summary>
         /// -zhuShi-
         /// </summary>
+        [SugarColumn(ColumnDescription = ""-zhuShiAttr-"", IsNullable = -isNullable-)]
         public -dbType- -colName- {{ get; set; }}
 ");
                     }
                     Type ttttt = this.GetTypeByString(dr[dataTypeName].ToString());
+                    codeString.Replace("-isNullable-", dr[allowDBNullName].ToString() == "True" ? "true" : "false");
                     if (ttttt.IsValueType && dr[allowDBNullName].ToString() == "True")
                     {
                         codeString.Replace("-dbType-", isYuLan ? $"<span style=\"color:#23C645\">{dr[dataTypeName].ToString()}?</span>" : dr[dataTypeName].ToString() + "?");  //替换数据类型
@@ -1685,6 +1633,7 @@ namespace {settings.EntityNamespace.Trim()}
                     }
                     codeString.Replace("-colName-", settings.PropCapsCount > 0 ? dr[columnName].ToString().SetLengthToUpperByStart((int)settings.PropCapsCount) : dr[columnName].ToString());  //替换列名（属性名）
                     codeString.Replace("-zhuShi-", zhuShi.Replace("\r\n", "\r\n        ///"));
+                    codeString.Replace("-zhuShiAttr-", (zhuShi ?? string.Empty).Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("\r", " ").Replace("\n", " "));
                 }
 
 
@@ -1720,97 +1669,36 @@ namespace {settings.EntityNamespace.Trim()}
                     }
                     if ((bool)dr[isKeyName] && !(bool)dr[isIdentityName])
                     {
-                        if (settings.SqlSugarPK)
-                        {
-                            codeString.Append($@"
+                        codeString.Append($@"
         private -dbType- _-colName-;
         /// <summary>
         /// -zhuShi-
         /// </summary>
-        [SugarColumn(IsPrimaryKey = true)]
+        [SugarColumn(ColumnDescription = ""-zhuShiAttr-"", IsPrimaryKey = true, IsNullable = -isNullable-)]
         public -dbType- -colName- {{ get {{ {getString} }} set {{ {setString} }} }}
 ");
-                        }
-                        else
-                        {
-                            codeString.Append($@"
-        private -dbType- _-colName-;
-        /// <summary>
-        /// -zhuShi-
-        /// </summary>
-        public -dbType- -colName- {{ get {{ {getString} }} set {{ {setString} }} }}
-");
-                        }
                     }
                     else if ((bool)dr[isKeyName] && (bool)dr[isIdentityName])
                     {
-                        if (settings.SqlSugarPK && settings.SqlSugarBZL)
-                        {
-                            codeString.Append($@"
+                        codeString.Append($@"
         private -dbType- _-colName-;
         /// <summary>
         /// -zhuShi-
         /// </summary>
-        [SugarColumn(IsPrimaryKey = true, IsIdentity = true)]
+        [SugarColumn(ColumnDescription = ""-zhuShiAttr-"", IsPrimaryKey = true, IsIdentity = true, IsNullable = -isNullable-)]
         public -dbType- -colName- {{ get {{ {getString} }} set {{ {setString} }} }}
 ");
-                        }
-                        else if (settings.SqlSugarPK && !settings.SqlSugarBZL)
-                        {
-                            codeString.Append($@"
-        private -dbType- _-colName-;
-        /// <summary>
-        /// -zhuShi-
-        /// </summary>
-        [SugarColumn(IsPrimaryKey = true)]
-        public -dbType- -colName- {{ get {{ {getString} }} set {{ {setString} }} }}
-");
-                        }
-                        else if (!settings.SqlSugarPK && settings.SqlSugarBZL)
-                        {
-                            codeString.Append($@"
-        private -dbType- _-colName-;
-        /// <summary>
-        /// -zhuShi-
-        /// </summary>
-        [SugarColumn(IsIdentity = true)]
-        public -dbType- -colName- {{ get {{ {getString} }} set {{ {setString} }} }}
-");
-                        }
-                        else
-                        {
-                            codeString.Append($@"
-        private -dbType- _-colName-;
-        /// <summary>
-        /// -zhuShi-
-        /// </summary>
-        public -dbType- -colName- {{ get {{ {getString} }} set {{ {setString} }} }}
-");
-                        }
                     }
                     else if (!(bool)dr[isKeyName] && (bool)dr[isIdentityName])
                     {
-                        if (settings.SqlSugarBZL)
-                        {
-                            codeString.Append($@"
+                        codeString.Append($@"
         private -dbType- _-colName-;
         /// <summary>
         /// -zhuShi-
         /// </summary>
-        [SugarColumn(IsIdentity = true)]
+        [SugarColumn(ColumnDescription = ""-zhuShiAttr-"", IsIdentity = true, IsNullable = -isNullable-)]
         public -dbType- -colName- {{ get {{ {getString} }} set {{ {setString} }} }}
 ");
-                        }
-                        else
-                        {
-                            codeString.Append($@"
-        private -dbType- _-colName-;
-        /// <summary>
-        /// -zhuShi-
-        /// </summary>
-        public -dbType- -colName- {{ get {{ {getString} }} set {{ {setString} }} }}
-");
-                        }
                     }
                     else
                     {
@@ -1819,10 +1707,12 @@ namespace {settings.EntityNamespace.Trim()}
         /// <summary>
         /// -zhuShi-
         /// </summary>
+        [SugarColumn(ColumnDescription = ""-zhuShiAttr-"", IsNullable = -isNullable-)]
         public -dbType- -colName- {{ get {{ {getString} }} set {{ {setString} }} }}
 ");
                     }
                     Type ttttt = this.GetTypeByString(dr[dataTypeName].ToString());
+                    codeString.Replace("-isNullable-", dr[allowDBNullName].ToString() == "True" ? "true" : "false");
                     if (ttttt.IsValueType && dr[allowDBNullName].ToString() == "True")
                     {
                         codeString.Replace("-dbType-", isYuLan ? $"<span style=\"color:#23C645\">{dr[dataTypeName].ToString()}?</span>" : dr[dataTypeName].ToString() + "?");  //替换数据类型
@@ -1862,6 +1752,7 @@ namespace {settings.EntityNamespace.Trim()}
                     }
                     codeString.Replace("-colName-", settings.PropCapsCount > 0 ? dr[columnName].ToString().SetLengthToUpperByStart((int)settings.PropCapsCount) : dr[columnName].ToString());  //替换列名（属性名）
                     codeString.Replace("-zhuShi-", zhuShi.Replace("\r\n", "\r\n        ///"));
+                    codeString.Replace("-zhuShiAttr-", (zhuShi ?? string.Empty).Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("\r", " ").Replace("\n", " "));
                 }
             }
             codeString.Append(@"    }
