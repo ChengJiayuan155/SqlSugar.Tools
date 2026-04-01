@@ -278,7 +278,7 @@ const app = createApp({
                     this.loading = true;
                     const json = JSON.stringify(this.MySqlForm);
                     setItem(mySqlLinkInfoKey, json);
-                    let linkString = `server=${this.MySqlForm.host};User Id=${this.MySqlForm.account};password=${this.MySqlForm.pwd};port=${this.MySqlForm.port};SslMode = None;`;
+                    let linkString = `server=${this.MySqlForm.host};User Id=${this.MySqlForm.account};password=${this.MySqlForm.pwd};port=${this.MySqlForm.port};`;
                     mysql.testLink(linkString);
                 }
             });
@@ -351,7 +351,7 @@ const app = createApp({
                         });
                         return;
                     }
-                    let linkString = `server=${this.MySqlForm.host};User Id=${this.MySqlForm.account};password=${this.MySqlForm.pwd};Database=${this.MySqlForm.db};port=${this.MySqlForm.port};SslMode = None;`;
+                    let linkString = `server=${this.MySqlForm.host};User Id=${this.MySqlForm.account};password=${this.MySqlForm.pwd};Database=${this.MySqlForm.db};port=${this.MySqlForm.port};`;
                     if (this.activeIndex === 0) {
                         this.selectYuanDB.dbType = 'MySQL';
                         this.selectYuanDB.linkString = linkString;

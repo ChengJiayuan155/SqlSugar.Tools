@@ -477,7 +477,7 @@ const app = createApp({
             this.$refs['MySqlForm'].validate((valid) => {
                 if (valid) {
                     this.loading = true;
-                    let linkString = `server=${this.MySqlForm.host};User Id=${this.MySqlForm.account};password=${this.MySqlForm.pwd};port=${this.MySqlForm.port};SslMode = None;`;
+                    let linkString = `server=${this.MySqlForm.host};User Id=${this.MySqlForm.account};password=${this.MySqlForm.pwd};port=${this.MySqlForm.port};`;
                     mysql.testLink(linkString);
                 }
             });
@@ -499,7 +499,7 @@ const app = createApp({
                         });
                         return;
                     }
-                    let linkString = `server=${this.MySqlForm.host};User Id=${this.MySqlForm.account};password=${this.MySqlForm.pwd};Database=${this.MySqlForm.db};port=${this.MySqlForm.port};SslMode = None;`;
+                    let linkString = `server=${this.MySqlForm.host};User Id=${this.MySqlForm.account};password=${this.MySqlForm.pwd};Database=${this.MySqlForm.db};port=${this.MySqlForm.port};`;
                     this.dbData.push({ label: this.MySqlForm.name, linkString, children: [], type: 'mysql' });
                     this.showMySqlDialog = false;
                     addedDBData({ label: this.MySqlForm.name, linkString, children: [], type: 'mysql' });
